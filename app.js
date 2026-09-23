@@ -17,8 +17,9 @@ let currentUserData = null;
 let selectedAvatarUrl = "https://api.dicebear.com/7.x/pixel-art/svg?seed=nox1";
 let isRegisterMode = true;
 let currentActiveChatUser = null;
-let currentExternalProfileUser = null; // Variable para rastrear el perfil externo que se está viendo
+let currentExternalProfileUser = null;
 let currentLang = "es";
+let currentPostCompressedImage = null; // Variable para la imagen comprimida del post en curso
 
 const translations = {
     es: {
@@ -104,8 +105,12 @@ function toggleAuthMode() {
     if (avatarSelector) avatarSelector.style.display = isRegisterMode ? 'flex' : 'none';
     if (chooseAvatarTxt) chooseAvatarTxt.style.display = isRegisterMode ? 'block' : 'none';
     
-    document.getElementById('btn-submit-auth').innerHTML = `<span>${isRegisterMode ? translations[currentLang].regBtn : translations[currentLang].logBtn}</span> <i class="bi bi-arrow-right"></i>`;
-    document.getElementById('txt-auth-toggle').innerText = isRegisterMode ? translations[currentLang].switchReg : translations[currentLang].switchLog;
+    const submitAuthBtn = document.getElementById('btn-submit-auth');
+    const authToggleTxt = document.getElementById('txt-auth-toggle');
+    const t = translations[currentLang];
+
+    if (submitAuthBtn) submitAuthBtn.innerHTML = `<span>${isRegisterMode ? t.regBtn : t.logBtn}</span> <i class="bi bi-arrow-right"></i>`;
+    if (authToggleTxt) authToggleTxt.innerText = isRegisterMode ? t.switchReg : t.switchLog;
 }
 
 async function handleAuth() {
@@ -134,7 +139,7 @@ async function handleAuth() {
                 username: username,
                 email: email,
                 avatar: selectedAvatarUrl,
-                bio: "Hola, estoy usando B'ob.",
+                bio: "Hola, estoy usando Nox Direct.",
                 followers: [],
                 following: [],
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -148,7 +153,18 @@ async function handleAuth() {
     }
 }
 
-// Escuchador de estado de sesión robusto
+// Cierre de sesión
+function logout() {
+    auth.signOut().then(() => {
+        currentUserData = null;
+        currentActiveChatUser = null;
+        currentExternalProfileUser = null;
+    }).catch(error => {
+        console.error("Error al cerrar sesión:", error);
+    });
+}
+
+// Escuchador de estado de sesión
 auth.onAuthStateChanged((user) => {
     const authScreen = document.getElementById('auth-screen');
     const appScreen = document.getElementById('app');
@@ -157,7 +173,7 @@ auth.onAuthStateChanged((user) => {
         if (authScreen) authScreen.classList.add('hidden');
         if (appScreen) appScreen.classList.remove('hidden');
         loadUserData(user.uid);
-        loadPosts(); // Cargar publicaciones en tiempo real al iniciar sesión
+        loadPosts();
     } else {
         if (authScreen) authScreen.classList.remove('hidden');
         if (appScreen) appScreen.classList.add('hidden');
@@ -188,7 +204,6 @@ function switchSection(sectionId, btnElement) {
     if (btnElement) btnElement.classList.add('active');
 }
 
-// Funcionalidad para ver perfiles externos completos
 async function viewUserProfile(uid) {
     if (currentUserData && currentUserData.uid === uid) {
         switchSection('profile', document.querySelectorAll('.dock-btn')[2]);
@@ -496,7 +511,7 @@ async function updateProfile() {
     alert("Perfil actualizado correctamente.");
 }
 
-// --- FOTO DE PERFIL CON COMPRESIÓN MÁXIMA EN CLIENTE ---
+// Subida de foto de perfil con compresión
 function handleAvatarUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -546,7 +561,64 @@ function handleAvatarUpload(event) {
     reader.readAsDataURL(file);
 }
 
-// --- CONTADOR DE CARACTERES PARA POSTS ---
+// Selección y compresión de imagen para posts
+function handlePostImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 600;
+            const MAX_HEIGHT = 600;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            currentPostCompressedImage = canvas.toDataURL('image/jpeg', 0.7);
+
+            const previewContainer = document.getElementById('post-image-preview-container');
+            const previewImg = document.getElementById('post-image-preview');
+            if (previewContainer && previewImg) {
+                previewImg.src = currentPostCompressedImage;
+                previewContainer.classList.remove('hidden');
+            }
+        };
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePostImage() {
+    currentPostCompressedImage = null;
+    const previewContainer = document.getElementById('post-image-preview-container');
+    const previewImg = document.getElementById('post-image-preview');
+    const fileInput = document.getElementById('post-image-input');
+
+    if (previewContainer) previewContainer.classList.add('hidden');
+    if (previewImg) previewImg.src = '';
+    if (fileInput) fileInput.value = '';
+}
+
+// Contador de caracteres para posts
 const postTextInput = document.getElementById('post-text-input');
 if (postTextInput) {
     postTextInput.addEventListener('input', function() {
@@ -556,28 +628,41 @@ if (postTextInput) {
     });
 }
 
-// --- CREAR PUBLICACIÓN TIPO TWEET ---
+// Crear publicación tipo tweet con soporte de imagen
 function createPost() {
-    const text = document.getElementById('post-text-input').value.trim();
-    if (!text) return alert("Escribe algo para publicar.");
+    const textInput = document.getElementById('post-text-input');
+    if (!textInput) return;
+
+    const text = textInput.value.trim();
+    if (!text && !currentPostCompressedImage) {
+        return alert("Escribe algo o adjunta una imagen para publicar.");
+    }
+
+    if (!currentUserData) {
+        alert("Debes iniciar sesión para publicar.");
+        return;
+    }
 
     const postData = {
         uid: currentUserData.uid,
         username: currentUserData.username || "Usuario",
         avatar: currentUserData.avatar || "",
         text: text,
+        image: currentPostCompressedImage || null,
         likes: [],
         reposts: [],
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     db.collection('posts').add(postData).then(() => {
-        document.getElementById('post-text-input').value = '';
-        document.getElementById('post-char-count').innerText = '300';
+        textInput.value = '';
+        const charCount = document.getElementById('post-char-count');
+        if (charCount) charCount.innerText = '300';
+        removePostImage();
     }).catch(err => console.error("Error al crear post:", err));
 }
 
-// --- CARGAR POSTS GLOBALES Y FILTRAR REPOSTS EN PERFIL PROPIO ---
+// Cargar posts globales y filtrar reposts en perfil propio
 function loadPosts() {
     db.collection('posts').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         const globalContainer = document.getElementById('global-posts-container');
@@ -612,7 +697,7 @@ function loadPosts() {
     });
 }
 
-// --- CARGAR POSTS DE UN USUARIO EXTERNO ---
+// Cargar posts de un usuario externo
 function loadExternalUserPosts(targetUid) {
     db.collection('posts').where('uid', '==', targetUid).orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         const extContainer = document.getElementById('ext-user-posts-container');
@@ -630,7 +715,7 @@ function loadExternalUserPosts(targetUid) {
     });
 }
 
-// --- RENDERIZAR TARJETA DE POST ---
+// Renderizar tarjeta de post con imagen integrada
 function renderPostCard(postId, data, container, badgeLabel = null) {
     const isLiked = currentUserData && data.likes && data.likes.includes(currentUserData.uid);
     const isReposted = currentUserData && data.reposts && data.reposts.includes(currentUserData.uid);
@@ -649,6 +734,13 @@ function renderPostCard(postId, data, container, badgeLabel = null) {
             </div>
         </div>
         <div class="tweet-body">${escapeHTML(data.text)}</div>
+        
+        ${data.image ? `
+            <div style="margin-top: 10px; margin-bottom: 10px; border-radius: var(--radius-sm, 8px); overflow: hidden; border: 1px solid var(--border-color);">
+                <img src="${data.image}" alt="Imagen del post" style="width: 100%; max-height: 350px; object-fit: cover; display: block;">
+            </div>
+        ` : ''}
+
         <div class="tweet-footer">
             <button class="tweet-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${postId}')">
                 <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> <span>${likesCount}</span>
@@ -672,7 +764,6 @@ function renderPostCard(postId, data, container, badgeLabel = null) {
     loadComments(postId);
 }
 
-// --- INTERACCIÓN: LIKE ---
 function toggleLike(postId) {
     if (!currentUserData) return;
     const postRef = db.collection('posts').doc(postId);
@@ -690,7 +781,6 @@ function toggleLike(postId) {
     }).catch(err => console.error("Error en like:", err));
 }
 
-// --- INTERACCIÓN: REPOST ---
 function toggleRepost(postId) {
     if (!currentUserData) return;
     const postRef = db.collection('posts').doc(postId);
@@ -708,13 +798,11 @@ function toggleRepost(postId) {
     }).catch(err => console.error("Error en repost:", err));
 }
 
-// --- MOSTRAR/OCULTAR CAJA DE COMENTARIOS ---
 function toggleCommentBox(postId) {
     const box = document.getElementById(`comments-${postId}`);
     if (box) box.classList.toggle('hidden');
 }
 
-// --- AÑADIR COMENTARIO ---
 function addComment(postId) {
     if (!currentUserData) return;
     const input = document.getElementById(`comment-input-${postId}`);
@@ -731,7 +819,6 @@ function addComment(postId) {
     }).catch(err => console.error("Error al comentar:", err));
 }
 
-// --- CARGAR COMENTARIOS ---
 function loadComments(postId) {
     const listContainer = document.getElementById(`comments-list-${postId}`);
     if (!listContainer) return;
@@ -785,10 +872,13 @@ function changeLanguage(lang) {
     setTxt('lbl-theme-select', t.themeSelect);
     setTxt('lbl-stat-followers', t.followers);
     setTxt('lbl-stat-following', t.following);
-    setTxt('txt-auth-title', t.authTitle);
-    setTxt('txt-auth-sub', t.authSub);
-}
-
-function logout() {
-    auth.signOut();
+    
+    const submitAuthBtn = document.getElementById('btn-submit-auth');
+    const authToggleTxt = document.getElementById('txt-auth-toggle');
+    if (submitAuthBtn) {
+        submitAuthBtn.innerHTML = `<span>${isRegisterMode ? t.regBtn : t.logBtn}</span> <i class="bi bi-arrow-right"></i>`;
+    }
+    if (authToggleTxt) {
+        authToggleTxt.innerText = isRegisterMode ? t.switchReg : t.switchLog;
+    }
 }

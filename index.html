@@ -66,6 +66,11 @@
                     <span>Feed</span>
                     <div class="badge-dot" id="notif-dot"></div>
                 </button>
+                <!-- NUEVO APARTADO DE AMIGOS INDEPENDIENTE -->
+                <button class="dock-btn" onclick="switchSection('friends', this)" title="Amigos">
+                    <i class="bi bi-people"></i>
+                    <span>Amigos</span>
+                </button>
                 <button class="dock-btn" onclick="switchSection('chat', this)" title="Mensajes">
                     <i class="bi bi-chat-dots"></i>
                     <span>Chat</span>
@@ -93,11 +98,25 @@
                     <h2 id="lbl-feed-title">Feed Social (Posts)</h2>
                 </div>
 
-                <!-- CAJA PARA CREAR POST TIPO TWIT -->
+                <!-- CAJA PARA CREAR POST TIPO TWIT CON IMAGEN COMPRIMIDA -->
                 <div class="card-box create-post-card" style="margin-bottom: 20px;">
-                    <textarea id="post-text-input" placeholder="¿Qué está pasando? (Solo texto)..." maxlength="300" rows="3"></textarea>
+                    <textarea id="post-text-input" placeholder="¿Qué está pasando?..." maxlength="300" rows="3"></textarea>
+                    
+                    <!-- Previsualización de la imagen comprimida a adjuntar -->
+                    <div id="post-image-preview-container" class="hidden" style="margin-bottom: 10px; position: relative; max-width: 150px;">
+                        <img id="post-image-preview" src="" alt="Preview" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <button type="button" onclick="removePostImage()" style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px;"><i class="bi bi-x"></i></button>
+                    </div>
+
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                        <span id="post-char-count" style="font-size: 11px; color: var(--text-secondary);">300</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="post-char-count" style="font-size: 11px; color: var(--text-secondary);">300</span>
+                            <!-- Botón para adjuntar imagen -->
+                            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 10px; font-size: 12px;" onclick="document.getElementById('post-image-input').click()" title="Adjuntar imagen comprimida">
+                                <i class="bi bi-image"></i> Foto
+                            </button>
+                            <input type="file" id="post-image-input" accept="image/*" style="display: none;" onchange="handlePostImageSelect(event)">
+                        </div>
                         <button class="btn-primary" style="width: auto; padding: 8px 18px;" onclick="createPost()">
                             <i class="bi bi-send-fill me-1"></i> Publicar
                         </button>
@@ -131,16 +150,24 @@
                         <p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 20px;">No hay publicaciones aún.</p>
                     </div>
                 </div>
+            </section>
 
-                <div class="card-box" style="margin-top:20px;">
+            <!-- SECTION 2: APARTADO DE AMIGOS INDEPENDIENTE -->
+            <section id="sec-friends" class="section-view">
+                <div class="section-header-box">
+                    <h2><i class="bi bi-people-fill me-2"></i>Gestión de Amigos y Conexiones</h2>
+                </div>
+                <div class="card-box">
                     <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px; display:flex; align-items:center; gap:8px;" id="lbl-friends-head">
                         <i class="bi bi-people text-accent"></i> Amigos Mutuos (Chat Habilitado)
                     </h3>
-                    <div id="mutual-friends-list"></div>
+                    <div id="mutual-friends-list">
+                        <p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 20px;">No tienes amigos mutuos todavía.</p>
+                    </div>
                 </div>
             </section>
 
-            <!-- SECTION 2: CHAT DIRECTO -->
+            <!-- SECTION 3: CHAT DIRECTO -->
             <section id="sec-chat" class="section-view">
                 <div class="chat-layout">
                     <div class="chat-sidebar" id="chat-threads">
@@ -164,7 +191,7 @@
                 </div>
             </section>
 
-            <!-- SECTION 3: PERFIL (PROPIO) -->
+            <!-- SECTION 4: PERFIL (PROPIO) -->
             <section id="sec-profile" class="section-view">
                 <div class="section-header-box">
                     <h2 id="lbl-profile-title"><i class="bi bi-person-badge-fill me-2"></i>Mi Perfil</h2>
@@ -252,7 +279,7 @@
                 </div>
             </section>
 
-            <!-- SECTION 4: AJUSTES -->
+            <!-- SECTION 5: AJUSTES -->
             <section id="sec-settings" class="section-view">
                 <div class="section-header-box">
                     <h2 id="lbl-settings-title"><i class="bi bi-gear-fill me-2"></i>Ajustes del Sistema</h2>

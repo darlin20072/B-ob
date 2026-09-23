@@ -434,6 +434,19 @@ button.btn-secondary:hover {
   margin-bottom: 12px;
 }
 
+/* --- IMÁGENES DENTRO DE LOS POSTS (Ajustadas a tamaño compacto) --- */
+.tweet-card img:not(.tweet-avatar),
+.tweet-card .tweet-body img {
+  width: 100%;
+  max-height: 240px; /* Reducido para evitar que ocupen demasiado espacio vertical */
+  height: auto;
+  object-fit: cover; /* Llena el contenedor de forma limpia y equilibrada */
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-sm);
+  display: block;
+  margin: 8px auto;
+}
+
 .tweet-footer {
   display: flex;
   gap: 20px;
@@ -538,7 +551,7 @@ button.btn-secondary:hover {
   flex-direction: column;
   height: 100%;
   background: var(--bg-main);
-  overflow: hidden; /* Evita que desborde el contenedor */
+  overflow: hidden;
 }
 .chat-messages {
   flex: 1;
@@ -577,7 +590,7 @@ button.btn-secondary:hover {
   display: flex;
   gap: 10px;
   background: var(--bg-surface);
-  flex-shrink: 0; /* Impide que el input se comprima o desaparezca */
+  flex-shrink: 0;
 }
 .chat-input-area input {
   margin: 0;
@@ -692,7 +705,6 @@ button.btn-secondary:hover {
   .dock-nav { flex-direction: row; width: 100%; justify-content: space-around; }
   .workspace { height: 100vh; height: 100dvh; border-radius: 0; }
   
-  /* CORRECCIÓN PRINCIPAL PARA MÓVIL: Dar espacio inferior para que el input del chat no quede tapado por la barra flotante */
   .section-view { 
     padding: 12px; 
     padding-bottom: 80px; 
