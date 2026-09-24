@@ -347,6 +347,17 @@ function logout() {
             currentActiveChatUser = null;
             currentExternalProfileUser = null;
 
+            if (storiesUnsubscribe) {
+
+                storiesUnsubscribe();
+                storiesUnsubscribe = null;
+
+            }
+
+            storiesByUser = new Map();
+
+            closeStoryViewer();
+
         })
         .catch(error => {
 
@@ -418,6 +429,8 @@ async function loadUserData(uid) {
                 renderProfile();
 
                 loadSocialData();
+
+                loadStories();
 
                 if (currentExternalProfileUser) {
 
@@ -1535,9 +1548,19 @@ function renderProfile() {
             'edit-bio'
         );
 
+    const storyCreateAvatar =
+        document.getElementById(
+            'story-create-avatar'
+        );
+
 
     if (avatarElem)
         avatarElem.src =
+            currentUserData.avatar;
+
+
+    if (storyCreateAvatar)
+        storyCreateAvatar.src =
             currentUserData.avatar;
 
 
@@ -3189,5 +3212,1078 @@ function changeLanguage(
                 : t.switchLog;
 
     }
+
+}
+
+
+// ============================================================
+// HISTORIAS (EXPIRAN A LAS 24 HORAS)
+// ============================================================
+
+const STORY_DURATION_MS =
+    24 * 60 * 60 * 1000; // 24 horas
+
+const STORY_IMAGE_MS =
+    5000; // duración de cada historia tipo imagen
+
+const MAX_STORY_WIDTH =
+    800;
+
+const MAX_STORY_HEIGHT =
+    1200;
+
+const MAX_STORY_VIDEO_BYTES =
+    900000; // límite aproximado por el tamaño máx. de un doc de Firestore
+
+
+let storiesByUser =
+    new Map(); // uid -> { uid, username, avatar, stories: [...] }
+
+let storiesUnsubscribe =
+    null;
+
+let currentStoryQueue =
+    [];
+
+let currentStoryUserIndex =
+    0;
+
+let currentStoryIndex =
+    0;
+
+let storyProgressTimer =
+    null;
+
+let storyProgressStart =
+    0;
+
+let storyProgressElapsed =
+    0;
+
+let storyProgressDuration =
+    STORY_IMAGE_MS;
+
+let storyProgressPaused =
+    false;
+
+
+// ------------------------------------------------------------
+// SELECCIÓN Y SUBIDA DE HISTORIA
+// ------------------------------------------------------------
+
+function handleStorySelect(event) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file)
+        return;
+
+
+    if (!currentUserData) {
+
+        alert(
+            "Debes iniciar sesión para publicar una historia."
+        );
+
+        event.target.value =
+            '';
+
+        return;
+
+    }
+
+
+    const isVideo =
+        file.type.startsWith('video/');
+
+
+    if (isVideo) {
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function(e) {
+
+                const dataUrl =
+                    e.target.result;
+
+
+                if (dataUrl.length > MAX_STORY_VIDEO_BYTES) {
+
+                    alert(
+                        "El video es demasiado pesado para subirlo como historia. Prueba con uno más corto o usa una imagen."
+                    );
+
+                    return;
+
+                }
+
+
+                uploadStory(
+                    dataUrl,
+                    "video"
+                );
+
+            };
+
+
+        reader.readAsDataURL(file);
+
+        event.target.value =
+            '';
+
+        return;
+
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function(e) {
+
+            const img =
+                new Image();
+
+            img.src =
+                e.target.result;
+
+
+            img.onload =
+                function() {
+
+                    const canvas =
+                        document.createElement(
+                            'canvas'
+                        );
+
+                    let width =
+                        img.width;
+
+                    let height =
+                        img.height;
+
+
+                    if (width > height) {
+
+                        if (width > MAX_STORY_WIDTH) {
+
+                            height *=
+                                MAX_STORY_WIDTH / width;
+
+                            width =
+                                MAX_STORY_WIDTH;
+
+                        }
+
+                    } else {
+
+                        if (height > MAX_STORY_HEIGHT) {
+
+                            width *=
+                                MAX_STORY_HEIGHT / height;
+
+                            height =
+                                MAX_STORY_HEIGHT;
+
+                        }
+
+                    }
+
+
+                    canvas.width =
+                        width;
+
+                    canvas.height =
+                        height;
+
+
+                    const ctx =
+                        canvas.getContext(
+                            '2d'
+                        );
+
+
+                    ctx.drawImage(
+                        img,
+                        0,
+                        0,
+                        width,
+                        height
+                    );
+
+
+                    const compressedDataUrl =
+                        canvas.toDataURL(
+                            'image/jpeg',
+                            0.7
+                        );
+
+
+                    uploadStory(
+                        compressedDataUrl,
+                        "image"
+                    );
+
+                };
+
+        };
+
+
+    reader.readAsDataURL(file);
+
+    event.target.value =
+        '';
+
+}
+
+
+function uploadStory(
+    mediaData,
+    mediaType
+) {
+
+    db.collection('stories')
+        .add({
+
+            uid:
+                currentUserData.uid,
+
+            username:
+                currentUserData.username ||
+                "Usuario",
+
+            avatar:
+                currentUserData.avatar ||
+                "",
+
+            media:
+                mediaData,
+
+            type:
+                mediaType,
+
+            viewedBy:
+                [],
+
+            createdAt:
+                firebase.firestore
+                    .FieldValue
+                    .serverTimestamp()
+
+        })
+        .catch(err =>
+            console.error(
+                "Error al subir historia:",
+                err
+            )
+        );
+
+}
+
+
+// ------------------------------------------------------------
+// CARGA Y RENDER DE HISTORIAS ACTIVAS
+// ------------------------------------------------------------
+
+function loadStories() {
+
+    if (!currentUserData)
+        return;
+
+
+    if (storiesUnsubscribe) {
+
+        storiesUnsubscribe();
+
+        storiesUnsubscribe =
+            null;
+
+    }
+
+
+    storiesUnsubscribe =
+        db.collection('stories')
+            .orderBy(
+                'createdAt',
+                'desc'
+            )
+            .onSnapshot(snapshot => {
+
+                const now =
+                    Date.now();
+
+                const relevantUids =
+                    new Set(
+                        currentUserData.following ||
+                        []
+                    );
+
+                relevantUids.add(
+                    currentUserData.uid
+                );
+
+
+                storiesByUser =
+                    new Map();
+
+
+                snapshot.forEach(doc => {
+
+                    const data =
+                        doc.data();
+
+                    if (!relevantUids.has(data.uid))
+                        return;
+
+
+                    const createdMs =
+                        data.createdAt &&
+                        data.createdAt.toMillis
+                            ? data.createdAt.toMillis()
+                            : now;
+
+
+                    if (now - createdMs > STORY_DURATION_MS)
+                        return;
+
+
+                    if (!storiesByUser.has(data.uid)) {
+
+                        storiesByUser.set(
+                            data.uid,
+                            {
+                                uid:
+                                    data.uid,
+
+                                username:
+                                    data.username,
+
+                                avatar:
+                                    data.avatar,
+
+                                stories:
+                                    []
+                            }
+                        );
+
+                    }
+
+
+                    storiesByUser
+                        .get(data.uid)
+                        .stories
+                        .push({
+
+                            id:
+                                doc.id,
+
+                            ...data,
+
+                            createdMs:
+                                createdMs
+
+                        });
+
+                });
+
+
+                storiesByUser.forEach(entry => {
+
+                    entry.stories.sort(
+                        (a, b) =>
+                            a.createdMs - b.createdMs
+                    );
+
+                });
+
+
+                renderStoriesList();
+
+            }, error => {
+
+                console.error(
+                    "Error al cargar historias:",
+                    error
+                );
+
+            });
+
+}
+
+
+function renderStoriesList() {
+
+    const container =
+        document.getElementById(
+            'stories-users-container'
+        );
+
+    const emptyMsg =
+        document.getElementById(
+            'stories-empty-message'
+        );
+
+    if (!container)
+        return;
+
+
+    container.innerHTML =
+        '';
+
+
+    const entries =
+        Array.from(
+            storiesByUser.values()
+        )
+        .filter(
+            entry =>
+                !currentUserData ||
+                entry.uid !== currentUserData.uid
+        );
+
+
+    if (entries.length === 0) {
+
+        if (emptyMsg)
+            emptyMsg.style.display =
+                'block';
+
+        return;
+
+    }
+
+
+    if (emptyMsg)
+        emptyMsg.style.display =
+            'none';
+
+
+    entries.forEach(entry => {
+
+        const allSeen =
+            currentUserData &&
+            entry.stories.every(
+                s =>
+                    s.viewedBy &&
+                    s.viewedBy.includes(
+                        currentUserData.uid
+                    )
+            );
+
+
+        const item =
+            document.createElement(
+                'button'
+            );
+
+        item.type =
+            'button';
+
+        item.className =
+            `story-item ${
+                allSeen
+                    ? 'seen'
+                    : 'has-unseen'
+            }`;
+
+
+        item.innerHTML = `
+
+            <div class="story-avatar-ring">
+                <img src="${entry.avatar}" alt="${entry.username}">
+            </div>
+
+            <span>${entry.username}</span>
+
+        `;
+
+
+        item.onclick =
+            () =>
+                openStoryViewer(
+                    entry.uid
+                );
+
+
+        container.appendChild(
+            item
+        );
+
+    });
+
+}
+
+
+// ------------------------------------------------------------
+// VISOR DE HISTORIAS
+// ------------------------------------------------------------
+
+function openStoryViewer(uid) {
+
+    const entries =
+        Array.from(
+            storiesByUser.values()
+        )
+        .filter(
+            entry =>
+                !currentUserData ||
+                entry.uid !== currentUserData.uid
+        );
+
+
+    currentStoryQueue =
+        entries.map(
+            e => e.uid
+        );
+
+
+    const idx =
+        currentStoryQueue.indexOf(uid);
+
+    if (idx === -1)
+        return;
+
+
+    currentStoryUserIndex =
+        idx;
+
+    currentStoryIndex =
+        0;
+
+
+    const viewer =
+        document.getElementById(
+            'story-viewer'
+        );
+
+    if (viewer) {
+
+        viewer.classList.remove(
+            'hidden'
+        );
+
+        viewer.setAttribute(
+            'aria-hidden',
+            'false'
+        );
+
+    }
+
+
+    renderCurrentStory();
+
+}
+
+
+function getCurrentUserStories() {
+
+    const uid =
+        currentStoryQueue[
+            currentStoryUserIndex
+        ];
+
+    return storiesByUser.get(uid);
+
+}
+
+
+function renderCurrentStory() {
+
+    const userEntry =
+        getCurrentUserStories();
+
+    if (!userEntry) {
+
+        closeStoryViewer();
+
+        return;
+
+    }
+
+
+    const story =
+        userEntry.stories[
+            currentStoryIndex
+        ];
+
+    if (!story) {
+
+        goToNextUserStories();
+
+        return;
+
+    }
+
+
+    markStoryAsViewed(
+        story
+    );
+
+
+    const avatarElem =
+        document.getElementById(
+            'story-viewer-avatar'
+        );
+
+    const usernameElem =
+        document.getElementById(
+            'story-viewer-username'
+        );
+
+    const timeElem =
+        document.getElementById(
+            'story-viewer-time'
+        );
+
+    const mediaContainer =
+        document.getElementById(
+            'story-viewer-media-container'
+        );
+
+
+    if (avatarElem)
+        avatarElem.src =
+            userEntry.avatar;
+
+    if (usernameElem)
+        usernameElem.innerText =
+            userEntry.username;
+
+    if (timeElem)
+        timeElem.innerText =
+            formatStoryTime(
+                story.createdMs
+            );
+
+
+    if (mediaContainer) {
+
+        mediaContainer.innerHTML =
+            '';
+
+
+        if (story.type === 'video') {
+
+            const video =
+                document.createElement(
+                    'video'
+                );
+
+            video.src =
+                story.media;
+
+            video.autoplay =
+                true;
+
+            video.playsInline =
+                true;
+
+
+            video.onloadedmetadata =
+                () => {
+
+                    startStoryProgress(
+                        (video.duration * 1000) ||
+                        STORY_IMAGE_MS
+                    );
+
+                };
+
+
+            video.onended =
+                () =>
+                    nextStory();
+
+
+            mediaContainer.appendChild(
+                video
+            );
+
+            attachStoryPauseHandlers(
+                mediaContainer,
+                video
+            );
+
+        } else {
+
+            const img =
+                document.createElement(
+                    'img'
+                );
+
+            img.src =
+                story.media;
+
+
+            mediaContainer.appendChild(
+                img
+            );
+
+
+            startStoryProgress(
+                STORY_IMAGE_MS
+            );
+
+            attachStoryPauseHandlers(
+                mediaContainer,
+                null
+            );
+
+        }
+
+    }
+
+}
+
+
+function attachStoryPauseHandlers(
+    mediaContainer,
+    videoElem
+) {
+
+    const pause =
+        () =>
+            pauseStoryProgress(
+                videoElem
+            );
+
+    const resume =
+        () =>
+            resumeStoryProgress(
+                videoElem
+            );
+
+
+    mediaContainer.addEventListener(
+        'mousedown',
+        pause
+    );
+
+    mediaContainer.addEventListener(
+        'touchstart',
+        pause
+    );
+
+    mediaContainer.addEventListener(
+        'mouseup',
+        resume
+    );
+
+    mediaContainer.addEventListener(
+        'mouseleave',
+        resume
+    );
+
+    mediaContainer.addEventListener(
+        'touchend',
+        resume
+    );
+
+}
+
+
+function formatStoryTime(ms) {
+
+    const diffMin =
+        Math.max(
+            1,
+            Math.round(
+                (Date.now() - ms) / 60000
+            )
+        );
+
+
+    if (diffMin < 60)
+        return `Hace ${diffMin} min`;
+
+
+    const diffH =
+        Math.round(diffMin / 60);
+
+
+    return `Hace ${diffH} h`;
+
+}
+
+
+function markStoryAsViewed(story) {
+
+    if (!currentUserData)
+        return;
+
+    if (
+        story.viewedBy &&
+        story.viewedBy.includes(
+            currentUserData.uid
+        )
+    )
+        return;
+
+
+    db.collection('stories')
+        .doc(story.id)
+        .update({
+
+            viewedBy:
+                firebase.firestore
+                    .FieldValue
+                    .arrayUnion(
+                        currentUserData.uid
+                    )
+
+        })
+        .catch(err =>
+            console.error(
+                "Error al marcar historia como vista:",
+                err
+            )
+        );
+
+}
+
+
+function startStoryProgress(duration) {
+
+    clearStoryProgress();
+
+
+    storyProgressDuration =
+        duration;
+
+    storyProgressElapsed =
+        0;
+
+    storyProgressStart =
+        Date.now();
+
+    storyProgressPaused =
+        false;
+
+
+    const bar =
+        document.getElementById(
+            'story-viewer-progress-bar'
+        );
+
+    if (bar)
+        bar.style.width =
+            '0%';
+
+
+    storyProgressTimer =
+        setInterval(() => {
+
+            if (storyProgressPaused)
+                return;
+
+
+            const elapsed =
+                storyProgressElapsed +
+                (Date.now() - storyProgressStart);
+
+            const pct =
+                Math.min(
+                    100,
+                    (elapsed / storyProgressDuration) * 100
+                );
+
+
+            if (bar)
+                bar.style.width =
+                    pct + '%';
+
+
+            if (elapsed >= storyProgressDuration) {
+
+                nextStory();
+
+            }
+
+        }, 50);
+
+}
+
+
+function pauseStoryProgress(videoElem) {
+
+    if (storyProgressPaused)
+        return;
+
+
+    storyProgressElapsed +=
+        Date.now() - storyProgressStart;
+
+    storyProgressPaused =
+        true;
+
+
+    if (videoElem)
+        videoElem.pause();
+
+}
+
+
+function resumeStoryProgress(videoElem) {
+
+    if (!storyProgressPaused)
+        return;
+
+
+    storyProgressStart =
+        Date.now();
+
+    storyProgressPaused =
+        false;
+
+
+    if (videoElem)
+        videoElem.play();
+
+}
+
+
+function clearStoryProgress() {
+
+    if (storyProgressTimer) {
+
+        clearInterval(
+            storyProgressTimer
+        );
+
+        storyProgressTimer =
+            null;
+
+    }
+
+}
+
+
+function nextStory() {
+
+    const userEntry =
+        getCurrentUserStories();
+
+    if (!userEntry)
+        return;
+
+
+    if (currentStoryIndex < userEntry.stories.length - 1) {
+
+        currentStoryIndex++;
+
+        renderCurrentStory();
+
+    } else {
+
+        goToNextUserStories();
+
+    }
+
+}
+
+
+function previousStory() {
+
+    if (currentStoryIndex > 0) {
+
+        currentStoryIndex--;
+
+        renderCurrentStory();
+
+        return;
+
+    }
+
+
+    if (currentStoryUserIndex > 0) {
+
+        currentStoryUserIndex--;
+
+
+        const userEntry =
+            getCurrentUserStories();
+
+
+        currentStoryIndex =
+            userEntry
+                ? userEntry.stories.length - 1
+                : 0;
+
+
+        renderCurrentStory();
+
+    }
+
+}
+
+
+function goToNextUserStories() {
+
+    if (currentStoryUserIndex < currentStoryQueue.length - 1) {
+
+        currentStoryUserIndex++;
+
+        currentStoryIndex =
+            0;
+
+        renderCurrentStory();
+
+    } else {
+
+        closeStoryViewer();
+
+    }
+
+}
+
+
+function closeStoryViewer() {
+
+    clearStoryProgress();
+
+
+    const viewer =
+        document.getElementById(
+            'story-viewer'
+        );
+
+    if (viewer) {
+
+        viewer.classList.add(
+            'hidden'
+        );
+
+        viewer.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+
+    }
+
+
+    const mediaContainer =
+        document.getElementById(
+            'story-viewer-media-container'
+        );
+
+    if (mediaContainer)
+        mediaContainer.innerHTML =
+            '';
+
+
+    currentStoryQueue =
+        [];
+
+    currentStoryUserIndex =
+        0;
+
+    currentStoryIndex =
+        0;
 
 }

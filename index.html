@@ -4,307 +4,1185 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>B'ob</title>
+
     <!-- Firebase SDKs Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen">
         <div class="auth-card fade-in">
+
             <div class="auth-brand-badge">
                 <i class="bi bi-shield-lock-fill"></i>
             </div>
+
             <h1 id="txt-auth-title">B'ob</h1>
             <p id="txt-auth-sub">mensajeria cifrada</p>
-            
+
             <div id="auth-form-container">
+
                 <div class="input-group-custom">
                     <i class="bi bi-person"></i>
                     <input type="text" id="auth-username" placeholder="Nombre de usuario único">
                 </div>
+
                 <div class="input-group-custom">
                     <i class="bi bi-envelope"></i>
                     <input type="email" id="auth-email" placeholder="Correo electrónico">
                 </div>
+
                 <div class="input-group-custom">
                     <i class="bi bi-key"></i>
                     <input type="password" id="auth-password" placeholder="Contraseña">
                 </div>
-                
-                <p style="font-size:12px; margin-bottom:8px; color:var(--text-secondary); font-weight: 500;" id="txt-choose-avatar">Elige tu avatar:</p>
+
+                <p
+                    style="font-size:12px; margin-bottom:8px; color:var(--text-secondary); font-weight:500;"
+                    id="txt-choose-avatar">
+                    Elige tu avatar:
+                </p>
+
                 <div class="avatar-selector" id="avatar-selector">
-                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox1" class="avatar-option selected" data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox1" alt="Avatar 1">
-                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox2" class="avatar-option" data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox2" alt="Avatar 2">
-                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox3" class="avatar-option" data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox3" alt="Avatar 3">
-                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox4" class="avatar-option" data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox4" alt="Avatar 4">
+
+                    <img
+                        src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox1"
+                        class="avatar-option selected"
+                        data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox1"
+                        alt="Avatar 1"
+                    >
+
+                    <img
+                        src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox2"
+                        class="avatar-option"
+                        data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox2"
+                        alt="Avatar 2"
+                    >
+
+                    <img
+                        src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox3"
+                        class="avatar-option"
+                        data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox3"
+                        alt="Avatar 3"
+                    >
+
+                    <img
+                        src="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox4"
+                        class="avatar-option"
+                        data-url="https://api.dicebear.com/7.x/pixel-art/svg?seed=nox4"
+                        alt="Avatar 4"
+                    >
+
                 </div>
 
-                <button class="btn-primary" id="btn-submit-auth" onclick="handleAuth()">
-                    <span>Registrarse</span> <i class="bi bi-arrow-right"></i>
+                <button
+                    class="btn-primary"
+                    id="btn-submit-auth"
+                    onclick="handleAuth()"
+                >
+                    <span>Registrarse</span>
+                    <i class="bi bi-arrow-right"></i>
                 </button>
-                <p style="margin-top:20px; text-align:center; font-size:13px; cursor:pointer; color:var(--text-secondary);" onclick="toggleAuthMode()" id="txt-auth-toggle">¿Ya tienes cuenta? Inicia sesión</p>
+
+                <p
+                    style="margin-top:20px; text-align:center; font-size:13px; cursor:pointer; color:var(--text-secondary);"
+                    onclick="toggleAuthMode()"
+                    id="txt-auth-toggle">
+                    ¿Ya tienes cuenta? Inicia sesión
+                </p>
+
             </div>
         </div>
     </div>
 
+
     <!-- MAIN APP INTERFACE -->
     <div id="app" class="hidden fade-in">
+
         <!-- Dock Navigation -->
         <aside class="sidebar-dock">
+
             <div class="dock-brand">
                 <i class="bi bi-gitlab"></i>
             </div>
+
             <div class="dock-nav">
-                <button class="dock-btn active" onclick="switchSection('feed', this)" title="Feed & Social">
+
+                <button
+                    class="dock-btn active"
+                    onclick="switchSection('feed', this)"
+                    title="Feed & Social"
+                >
                     <i class="bi bi-compass"></i>
                     <span>Feed</span>
                     <div class="badge-dot" id="notif-dot"></div>
                 </button>
-                <!-- NUEVO APARTADO DE AMIGOS INDEPENDIENTE -->
-                <button class="dock-btn" onclick="switchSection('friends', this)" title="Amigos">
+
+                <button
+                    class="dock-btn"
+                    onclick="switchSection('friends', this)"
+                    title="Amigos"
+                >
                     <i class="bi bi-people"></i>
                     <span>Amigos</span>
                 </button>
-                <button class="dock-btn" onclick="switchSection('chat', this)" title="Mensajes">
+
+                <button
+                    class="dock-btn"
+                    onclick="switchSection('chat', this)"
+                    title="Mensajes"
+                >
                     <i class="bi bi-chat-dots"></i>
                     <span>Chat</span>
                 </button>
-                <button class="dock-btn" onclick="switchSection('profile', this)" title="Perfil">
+
+                <button
+                    class="dock-btn"
+                    onclick="switchSection('profile', this)"
+                    title="Perfil"
+                >
                     <i class="bi bi-person-circle"></i>
                     <span>Perfil</span>
                 </button>
-                <button class="dock-btn" onclick="switchSection('settings', this)" title="Ajustes">
+
+                <button
+                    class="dock-btn"
+                    onclick="switchSection('settings', this)"
+                    title="Ajustes"
+                >
                     <i class="bi bi-sliders"></i>
                     <span>Ajus</span>
                 </button>
+
             </div>
-            <button class="dock-btn logout-btn" onclick="logout()" title="Cerrar Sesión">
+
+            <button
+                class="dock-btn logout-btn"
+                onclick="logout()"
+                title="Cerrar Sesión"
+            >
                 <i class="bi bi-box-arrow-right"></i>
             </button>
+
         </aside>
+
 
         <!-- Workspace Viewport -->
         <main class="workspace">
 
+
             <!-- SECTION 1: FEED & SOCIAL -->
             <section id="sec-feed" class="section-view active">
+
                 <div class="section-header-box">
-                    <h2 id="lbl-feed-title">Feed Social (Posts)</h2>
+                    <h2 id="lbl-feed-title">
+                        Feed Social (Posts)
+                    </h2>
                 </div>
 
-                <!-- CAJA PARA CREAR POST TIPO TWIT CON IMAGEN COMPRIMIDA -->
-                <div class="card-box create-post-card" style="margin-bottom: 20px;">
-                    <textarea id="post-text-input" placeholder="¿Qué está pasando?..." maxlength="300" rows="3"></textarea>
-                    
-                    <!-- Previsualización de la imagen comprimida a adjuntar -->
-                    <div id="post-image-preview-container" class="hidden" style="margin-bottom: 10px; position: relative; max-width: 150px;">
-                        <img id="post-image-preview" src="" alt="Preview" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                        <button type="button" onclick="removePostImage()" style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px;"><i class="bi bi-x"></i></button>
-                    </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="post-char-count" style="font-size: 11px; color: var(--text-secondary);">300</span>
-                            <!-- Botón para adjuntar imagen -->
-                            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 10px; font-size: 12px;" onclick="document.getElementById('post-image-input').click()" title="Adjuntar imagen comprimida">
-                                <i class="bi bi-image"></i> Foto
-                            </button>
-                            <input type="file" id="post-image-input" accept="image/*" style="display: none;" onchange="handlePostImageSelect(event)">
-                        </div>
-                        <button class="btn-primary" style="width: auto; padding: 8px 18px;" onclick="createPost()">
-                            <i class="bi bi-send-fill me-1"></i> Publicar
+                <!-- ========================= -->
+                <!-- CREAR POST -->
+                <!-- ========================= -->
+
+                <div
+                    class="card-box create-post-card"
+                    style="margin-bottom:20px;"
+                >
+
+                    <textarea
+                        id="post-text-input"
+                        placeholder="¿Qué está pasando?..."
+                        maxlength="300"
+                        rows="3"
+                    ></textarea>
+
+
+                    <!-- PREVIEW DE IMAGEN -->
+                    <div
+                        id="post-image-preview-container"
+                        class="hidden"
+                        style="margin-bottom:10px; position:relative; max-width:150px;"
+                    >
+
+                        <img
+                            id="post-image-preview"
+                            src=""
+                            alt="Preview"
+                            style="width:100%; border-radius:var(--radius-sm); border:1px solid var(--border-color);"
+                        >
+
+                        <button
+                            type="button"
+                            onclick="removePostImage()"
+                            style="
+                                position:absolute;
+                                top:4px;
+                                right:4px;
+                                background:rgba(0,0,0,0.7);
+                                color:#fff;
+                                border:none;
+                                border-radius:50%;
+                                width:22px;
+                                height:22px;
+                                cursor:pointer;
+                                font-size:12px;
+                            "
+                        >
+                            <i class="bi bi-x"></i>
                         </button>
+
                     </div>
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:center;
+                            margin-top:8px;
+                        "
+                    >
+
+                        <div
+                            style="
+                                display:flex;
+                                align-items:center;
+                                gap:10px;
+                            "
+                        >
+
+                            <span
+                                id="post-char-count"
+                                style="font-size:11px; color:var(--text-secondary);"
+                            >
+                                300
+                            </span>
+
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                style="
+                                    width:auto;
+                                    padding:6px 10px;
+                                    font-size:12px;
+                                "
+                                onclick="document.getElementById('post-image-input').click()"
+                                title="Adjuntar imagen comprimida"
+                            >
+                                <i class="bi bi-image"></i>
+                                Foto
+                            </button>
+
+
+                            <input
+                                type="file"
+                                id="post-image-input"
+                                accept="image/*"
+                                style="display:none;"
+                                onchange="handlePostImageSelect(event)"
+                            >
+
+                        </div>
+
+
+                        <button
+                            class="btn-primary"
+                            style="
+                                width:auto;
+                                padding:8px 18px;
+                            "
+                            onclick="createPost()"
+                        >
+                            <i class="bi bi-send-fill me-1"></i>
+                            Publicar
+                        </button>
+
+                    </div>
+
                 </div>
 
+
+                <!-- FEED GRID -->
                 <div class="feed-grid">
+
+                    <!-- BUSCAR USUARIOS -->
                     <div class="card-box">
-                        <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px; display:flex; align-items:center; gap:8px;" id="lbl-search-head">
-                            <i class="bi bi-search text-accent"></i> Buscar Usuarios
+
+                        <h3
+                            style="
+                                font-size:14px;
+                                font-weight:500;
+                                margin-bottom:14px;
+                                display:flex;
+                                align-items:center;
+                                gap:8px;
+                            "
+                            id="lbl-search-head"
+                        >
+                            <i class="bi bi-search text-accent"></i>
+                            Buscar Usuarios
                         </h3>
-                        <input type="text" id="search-input" placeholder="Escribe nombre de usuario..." oninput="searchUsers(this.value)">
-                        <div id="search-results" style="margin-top:12px;"></div>
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Escribe nombre de usuario..."
+                            oninput="searchUsers(this.value)"
+                        >
+
+                        <div
+                            id="search-results"
+                            style="margin-top:12px;"
+                        ></div>
+
                     </div>
+
+
+                    <!-- NOTIFICACIONES -->
                     <div class="card-box">
-                        <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px; display:flex; align-items:center; gap:8px;" id="lbl-notif-head">
-                            <i class="bi bi-bell text-accent"></i> Notificaciones
+
+                        <h3
+                            style="
+                                font-size:14px;
+                                font-weight:500;
+                                margin-bottom:14px;
+                                display:flex;
+                                align-items:center;
+                                gap:8px;
+                            "
+                            id="lbl-notif-head"
+                        >
+                            <i class="bi bi-bell text-accent"></i>
+                            Notificaciones
                         </h3>
-                        <div id="notifications-list" style="font-size:13px; color:var(--text-secondary);">
+
+                        <div
+                            id="notifications-list"
+                            style="
+                                font-size:13px;
+                                color:var(--text-secondary);
+                            "
+                        >
                             Sin actividad reciente.
                         </div>
+
                     </div>
+
                 </div>
 
-                <!-- CONTENEDOR GENERAL DEL FEED DE PUBLICACIONES -->
-                <div class="card-box" style="margin-top:20px;">
-                    <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-                        <i class="bi bi-newspaper text-accent"></i> Publicaciones Globales
+
+                <!-- PUBLICACIONES GLOBALES -->
+                <div
+                    class="card-box"
+                    style="margin-top:20px;"
+                >
+
+                    <h3
+                        style="
+                            font-size:14px;
+                            font-weight:500;
+                            margin-bottom:14px;
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                        "
+                    >
+                        <i class="bi bi-newspaper text-accent"></i>
+                        Publicaciones Globales
                     </h3>
+
                     <div id="global-posts-container">
-                        <p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 20px;">No hay publicaciones aún.</p>
+
+                        <p
+                            style="
+                                font-size:13px;
+                                color:var(--text-secondary);
+                                text-align:center;
+                                padding:20px;
+                            "
+                        >
+                            No hay publicaciones aún.
+                        </p>
+
                     </div>
+
                 </div>
+
             </section>
 
-            <!-- SECTION 2: APARTADO DE AMIGOS INDEPENDIENTE -->
-            <section id="sec-friends" class="section-view">
+
+            <!-- SECTION 2: AMIGOS -->
+            <section
+                id="sec-friends"
+                class="section-view"
+            >
+
                 <div class="section-header-box">
-                    <h2><i class="bi bi-people-fill me-2"></i>Gestión de Amigos y Conexiones</h2>
+
+                    <h2>
+                        <i class="bi bi-people-fill me-2"></i>
+                        Gestión de Amigos y Conexiones
+                    </h2>
+
                 </div>
-                <div class="card-box">
-                    <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px; display:flex; align-items:center; gap:8px;" id="lbl-friends-head">
-                        <i class="bi bi-people text-accent"></i> Amigos Mutuos (Chat Habilitado)
-                    </h3>
-                    <div id="mutual-friends-list">
-                        <p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 20px;">No tienes amigos mutuos todavía.</p>
+
+
+                <!-- ========================= -->
+                <!-- SECCIÓN DE HISTORIAS -->
+                <!-- ========================= -->
+
+                <div
+                    class="card-box stories-card"
+                    id="stories-section"
+                >
+
+                    <div class="stories-header">
+
+                        <h3>
+                            <i class="bi bi-circle-square text-accent"></i>
+                            Historias
+                        </h3>
+
+                        <span class="stories-expiration">
+                            <i class="bi bi-clock"></i>
+                            24 horas
+                        </span>
+
                     </div>
+
+
+                    <div
+                        class="stories-list"
+                        id="stories-list"
+                    >
+
+                        <!-- CREAR HISTORIA -->
+                        <button
+                            type="button"
+                            class="story-create"
+                            onclick="document.getElementById('story-image-input').click()"
+                        >
+
+                            <div class="story-create-avatar">
+
+                                <img
+                                    id="story-create-avatar"
+                                    src=""
+                                    alt="Tu avatar"
+                                >
+
+                                <span class="story-add-icon">
+                                    <i class="bi bi-plus-lg"></i>
+                                </span>
+
+                            </div>
+
+                            <span>
+                                Tu historia
+                            </span>
+
+                        </button>
+
+
+                        <!-- HISTORIAS DE USUARIOS -->
+                        <div
+                            id="stories-users-container"
+                            class="stories-users-container"
+                        >
+
+                            <p
+                                class="stories-empty"
+                                id="stories-empty-message"
+                            >
+                                Las historias de tus amigos aparecerán aquí.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- INPUT DE HISTORIA -->
+                    <input
+                        type="file"
+                        id="story-image-input"
+                        accept="image/*,video/*"
+                        style="display:none;"
+                        onchange="handleStorySelect(event)"
+                    >
+
                 </div>
+
+
+                <!-- ========================= -->
+                <!-- VISOR DE HISTORIAS -->
+                <!-- ========================= -->
+
+                <div
+                    id="story-viewer"
+                    class="story-viewer hidden"
+                    aria-hidden="true"
+                >
+
+                    <div
+                        class="story-viewer-backdrop"
+                        onclick="closeStoryViewer()"
+                    ></div>
+
+
+                    <div class="story-viewer-content">
+
+                        <!-- BARRA DE PROGRESO -->
+                        <div class="story-viewer-progress">
+
+                            <div
+                                id="story-viewer-progress-bar"
+                            ></div>
+
+                        </div>
+
+
+                        <!-- CABECERA -->
+                        <div class="story-viewer-header">
+
+                            <div class="story-viewer-user">
+
+                                <img
+                                    id="story-viewer-avatar"
+                                    src=""
+                                    alt="Avatar"
+                                >
+
+                                <div>
+
+                                    <strong
+                                        id="story-viewer-username"
+                                    ></strong>
+
+                                    <span
+                                        id="story-viewer-time"
+                                    ></span>
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                class="story-viewer-close"
+                                onclick="closeStoryViewer()"
+                                aria-label="Cerrar historia"
+                            >
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+
+                        </div>
+
+
+                        <!-- CONTENIDO DE HISTORIA -->
+                        <div
+                            id="story-viewer-media-container"
+                            class="story-viewer-media-container"
+                        ></div>
+
+
+                        <!-- ANTERIOR -->
+                        <button
+                            type="button"
+                            class="story-viewer-nav story-viewer-prev"
+                            onclick="previousStory()"
+                            aria-label="Historia anterior"
+                        >
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+
+
+                        <!-- SIGUIENTE -->
+                        <button
+                            type="button"
+                            class="story-viewer-nav story-viewer-next"
+                            onclick="nextStory()"
+                            aria-label="Siguiente historia"
+                        >
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-box">
+
+                    <h3
+                        style="
+                            font-size:14px;
+                            font-weight:500;
+                            margin-bottom:14px;
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                        "
+                        id="lbl-friends-head"
+                    >
+                        <i class="bi bi-people text-accent"></i>
+                        Amigos Mutuos (Chat Habilitado)
+                    </h3>
+
+                    <div id="mutual-friends-list">
+
+                        <p
+                            style="
+                                font-size:13px;
+                                color:var(--text-secondary);
+                                text-align:center;
+                                padding:20px;
+                            "
+                        >
+                            No tienes amigos mutuos todavía.
+                        </p>
+
+                    </div>
+
+                </div>
+
             </section>
 
-            <!-- SECTION 3: CHAT DIRECTO -->
-            <section id="sec-chat" class="section-view">
+
+            <!-- SECTION 3: CHAT -->
+            <section
+                id="sec-chat"
+                class="section-view"
+            >
+
                 <div class="chat-layout">
-                    <div class="chat-sidebar" id="chat-threads">
-                        <div style="padding:20px; font-size:13px; color:var(--text-secondary); text-align:center;" id="txt-no-chats">
-                            <i class="bi bi-chat-square-text fs-4 d-block mb-2 opacity-50"></i>
+
+                    <div
+                        class="chat-sidebar"
+                        id="chat-threads"
+                    >
+
+                        <div
+                            style="
+                                padding:20px;
+                                font-size:13px;
+                                color:var(--text-secondary);
+                                text-align:center;
+                            "
+                            id="txt-no-chats"
+                        >
+
+                            <i
+                                class="bi bi-chat-square-text fs-4 d-block mb-2 opacity-50"
+                            ></i>
+
                             Selecciona un amigo mutuo para chatear
+
                         </div>
+
                     </div>
+
+
                     <div class="chat-window">
-                        <div id="active-chat-header" style="padding:16px 20px; border-bottom:1px solid var(--border-color); font-weight:500; font-size:14px; display: flex; align-items: center; background: var(--bg-surface);">
+
+                        <div
+                            id="active-chat-header"
+                            style="
+                                padding:16px 20px;
+                                border-bottom:1px solid var(--border-color);
+                                font-weight:500;
+                                font-size:14px;
+                                display:flex;
+                                align-items:center;
+                                background:var(--bg-surface);
+                            "
+                        >
                             Selecciona una conversación
                         </div>
-                        <div class="chat-messages" id="chat-messages-container"></div>
-                        <div class="chat-input-area hidden" id="chat-input-wrapper">
-                            <input type="text" id="message-input" placeholder="Escribe un mensaje..." onkeypress="handleKeyPress(event)">
-                            <button class="btn-primary" style="width: auto; padding: 0 20px; display: flex; align-items: center; gap: 6px;" onclick="sendMessage()" id="btn-send">
-                                <span>Enviar</span> <i class="bi bi-send-fill"></i>
+
+
+                        <div
+                            class="chat-messages"
+                            id="chat-messages-container"
+                        ></div>
+
+
+                        <div
+                            class="chat-input-area hidden"
+                            id="chat-input-wrapper"
+                        >
+
+                            <input
+                                type="text"
+                                id="message-input"
+                                placeholder="Escribe un mensaje..."
+                                onkeypress="handleKeyPress(event)"
+                            >
+
+                            <button
+                                class="btn-primary"
+                                style="
+                                    width:auto;
+                                    padding:0 20px;
+                                    display:flex;
+                                    align-items:center;
+                                    gap:6px;
+                                "
+                                onclick="sendMessage()"
+                                id="btn-send"
+                            >
+                                <span>Enviar</span>
+                                <i class="bi bi-send-fill"></i>
                             </button>
+
                         </div>
+
                     </div>
+
                 </div>
+
             </section>
 
-            <!-- SECTION 4: PERFIL (PROPIO) -->
-            <section id="sec-profile" class="section-view">
+
+            <!-- SECTION 4: PERFIL -->
+            <section
+                id="sec-profile"
+                class="section-view"
+            >
+
                 <div class="section-header-box">
-                    <h2 id="lbl-profile-title"><i class="bi bi-person-badge-fill me-2"></i>Mi Perfil</h2>
+
+                    <h2 id="lbl-profile-title">
+                        <i class="bi bi-person-badge-fill me-2"></i>
+                        Mi Perfil
+                    </h2>
+
                 </div>
+
+
                 <div class="profile-header">
-                    <div style="position: relative;">
-                        <img id="profile-view-avatar" src="" class="profile-avatar-large" alt="Avatar">
-                        <button class="btn-avatar-upload" onclick="document.getElementById('file-avatar-input').click()" title="Cambiar foto de perfil">
+
+                    <div style="position:relative;">
+
+                        <img
+                            id="profile-view-avatar"
+                            src=""
+                            class="profile-avatar-large"
+                            alt="Avatar"
+                        >
+
+                        <button
+                            class="btn-avatar-upload"
+                            onclick="document.getElementById('file-avatar-input').click()"
+                            title="Cambiar foto de perfil"
+                        >
                             <i class="bi bi-camera-fill"></i>
                         </button>
-                        <input type="file" id="file-avatar-input" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+
+                        <input
+                            type="file"
+                            id="file-avatar-input"
+                            accept="image/*"
+                            style="display:none;"
+                            onchange="handleAvatarUpload(event)"
+                        >
+
                     </div>
+
+
                     <div>
-                        <h3 id="profile-view-username" style="font-size:18px; font-weight:500; margin-bottom:4px;"></h3>
-                        <p id="profile-view-bio" style="font-size:13px; color:var(--text-secondary);">Sin biografía configurada.</p>
+
+                        <h3
+                            id="profile-view-username"
+                            style="
+                                font-size:18px;
+                                font-weight:500;
+                                margin-bottom:4px;
+                            "
+                        ></h3>
+
+                        <p
+                            id="profile-view-bio"
+                            style="
+                                font-size:13px;
+                                color:var(--text-secondary);
+                            "
+                        >
+                            Sin biografía configurada.
+                        </p>
+
                     </div>
-                </div>
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <span class="stat-num" id="stat-followers">0</span>
-                        <span class="stat-label" id="lbl-stat-followers">Seguidores</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-num" id="stat-following">0</span>
-                        <span class="stat-label" id="lbl-stat-following">Siguiendo</span>
-                    </div>
-                </div>
-                <div class="card-box" style="max-width:420px; margin-bottom: 20px;">
-                    <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px;" id="lbl-edit-profile">Editar Datos</h3>
-                    <input type="text" id="edit-bio" placeholder="Nueva biografía corta...">
-                    <button class="btn-primary" onclick="updateProfile()" id="btn-save-profile">
-                        <i class="bi bi-check2-circle me-1"></i> Guardar Cambios
-                    </button>
+
                 </div>
 
-                <!-- SECCIÓN DE MIS POSTS Y REPOSTS EN EL PERFIL -->
-                <div class="card-box">
-                    <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-                        <i class="bi bi-person-lines-fill text-accent"></i> Mis Publicaciones y Reposts
+
+                <div class="stats-row">
+
+                    <div class="stat-item">
+
+                        <span
+                            class="stat-num"
+                            id="stat-followers"
+                        >
+                            0
+                        </span>
+
+                        <span
+                            class="stat-label"
+                            id="lbl-stat-followers"
+                        >
+                            Seguidores
+                        </span>
+
+                    </div>
+
+
+                    <div class="stat-item">
+
+                        <span
+                            class="stat-num"
+                            id="stat-following"
+                        >
+                            0
+                        </span>
+
+                        <span
+                            class="stat-label"
+                            id="lbl-stat-following"
+                        >
+                            Siguiendo
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="card-box"
+                    style="
+                        max-width:420px;
+                        margin-bottom:20px;
+                    "
+                >
+
+                    <h3
+                        style="
+                            font-size:14px;
+                            font-weight:500;
+                            margin-bottom:14px;
+                        "
+                        id="lbl-edit-profile"
+                    >
+                        Editar Datos
                     </h3>
+
+                    <input
+                        type="text"
+                        id="edit-bio"
+                        placeholder="Nueva biografía corta..."
+                    >
+
+                    <button
+                        class="btn-primary"
+                        onclick="updateProfile()"
+                        id="btn-save-profile"
+                    >
+                        <i class="bi bi-check2-circle me-1"></i>
+                        Guardar Cambios
+                    </button>
+
+                </div>
+
+
+                <!-- MIS POSTS -->
+                <div class="card-box">
+
+                    <h3
+                        style="
+                            font-size:14px;
+                            font-weight:500;
+                            margin-bottom:14px;
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                        "
+                    >
+                        <i class="bi bi-person-lines-fill text-accent"></i>
+                        Mis Publicaciones y Reposts
+                    </h3>
+
                     <div id="my-profile-posts-container">
-                        <p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 10px;">Aún no has publicado nada.</p>
+
+                        <p
+                            style="
+                                font-size:13px;
+                                color:var(--text-secondary);
+                                text-align:center;
+                                padding:10px;
+                            "
+                        >
+                            Aún no has publicado nada.
+                        </p>
+
                     </div>
+
                 </div>
+
             </section>
 
-            <!-- SECCIÓN: PERFIL PÚBLICO DE OTRO USUARIO -->
-            <section id="sec-user-profile" class="section-view">
-                <div class="section-header-box" style="display: flex; align-items: center; justify-content: space-between;">
-                    <h2><i class="bi bi-person-lines-fill me-2"></i>Perfil de Usuario</h2>
-                    <button class="btn-secondary" onclick="goBackToFeed()" style="width: auto; padding: 6px 14px;">
-                        <i class="bi bi-arrow-left"></i> Volver
+
+            <!-- PERFIL PÚBLICO -->
+            <section
+                id="sec-user-profile"
+                class="section-view"
+            >
+
+                <div
+                    class="section-header-box"
+                    style="
+                        display:flex;
+                        align-items:center;
+                        justify-content:space-between;
+                    "
+                >
+
+                    <h2>
+                        <i class="bi bi-person-lines-fill me-2"></i>
+                        Perfil de Usuario
+                    </h2>
+
+                    <button
+                        class="btn-secondary"
+                        onclick="goBackToFeed()"
+                        style="
+                            width:auto;
+                            padding:6px 14px;
+                        "
+                    >
+                        <i class="bi bi-arrow-left"></i>
+                        Volver
                     </button>
+
                 </div>
+
+
                 <div class="profile-header">
-                    <img id="ext-profile-avatar" src="" class="profile-avatar-large" alt="Avatar">
+
+                    <img
+                        id="ext-profile-avatar"
+                        src=""
+                        class="profile-avatar-large"
+                        alt="Avatar"
+                    >
+
                     <div>
-                        <h3 id="ext-profile-username" style="font-size:18px; font-weight:500; margin-bottom:4px;"></h3>
-                        <p id="ext-profile-bio" style="font-size:13px; color:var(--text-secondary);">Sin biografía configurada.</p>
+
+                        <h3
+                            id="ext-profile-username"
+                            style="
+                                font-size:18px;
+                                font-weight:500;
+                                margin-bottom:4px;
+                            "
+                        ></h3>
+
+                        <p
+                            id="ext-profile-bio"
+                            style="
+                                font-size:13px;
+                                color:var(--text-secondary);
+                            "
+                        >
+                            Sin biografía configurada.
+                        </p>
+
                     </div>
+
                 </div>
+
+
                 <div class="stats-row">
+
                     <div class="stat-item">
-                        <span class="stat-num" id="ext-stat-followers">0</span>
-                        <span class="stat-label">Seguidores</span>
+
+                        <span
+                            class="stat-num"
+                            id="ext-stat-followers"
+                        >
+                            0
+                        </span>
+
+                        <span class="stat-label">
+                            Seguidores
+                        </span>
+
                     </div>
+
+
                     <div class="stat-item">
-                        <span class="stat-num" id="ext-stat-following">0</span>
-                        <span class="stat-label">Siguiendo</span>
+
+                        <span
+                            class="stat-num"
+                            id="ext-stat-following"
+                        >
+                            0
+                        </span>
+
+                        <span class="stat-label">
+                            Siguiendo
+                        </span>
+
                     </div>
+
                 </div>
-                <div class="card-box" style="max-width:420px; display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button class="btn-primary" id="btn-follow-action" onclick="toggleFollowUser()">
-                        <i class="bi bi-person-plus"></i> Seguir
+
+
+                <div
+                    class="card-box"
+                    style="
+                        max-width:420px;
+                        display:flex;
+                        gap:10px;
+                        margin-bottom:20px;
+                    "
+                >
+
+                    <button
+                        class="btn-primary"
+                        id="btn-follow-action"
+                        onclick="toggleFollowUser()"
+                    >
+                        <i class="bi bi-person-plus"></i>
+                        Seguir
                     </button>
+
                 </div>
+
 
                 <div class="card-box">
-                    <h3 style="font-size:14px; font-weight: 500; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-                        <i class="bi bi-newspaper text-accent"></i> Publicaciones del Usuario
+
+                    <h3
+                        style="
+                            font-size:14px;
+                            font-weight:500;
+                            margin-bottom:14px;
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                        "
+                    >
+                        <i class="bi bi-newspaper text-accent"></i>
+                        Publicaciones del Usuario
                     </h3>
+
                     <div id="ext-user-posts-container">
-                        <p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 10px;">Este usuario no tiene publicaciones.</p>
+
+                        <p
+                            style="
+                                font-size:13px;
+                                color:var(--text-secondary);
+                                text-align:center;
+                                padding:10px;
+                            "
+                        >
+                            Este usuario no tiene publicaciones.
+                        </p>
+
                     </div>
+
                 </div>
+
             </section>
+
 
             <!-- SECTION 5: AJUSTES -->
-            <section id="sec-settings" class="section-view">
+            <section
+                id="sec-settings"
+                class="section-view"
+            >
+
                 <div class="section-header-box">
-                    <h2 id="lbl-settings-title"><i class="bi bi-gear-fill me-2"></i>Ajustes del Sistema</h2>
+
+                    <h2 id="lbl-settings-title">
+                        <i class="bi bi-gear-fill me-2"></i>
+                        Ajustes del Sistema
+                    </h2>
+
                 </div>
-                <div class="card-box" style="max-width:380px;">
+
+
+                <div
+                    class="card-box"
+                    style="max-width:380px;"
+                >
+
                     <div class="settings-group">
-                        <label id="lbl-lang-select" for="language-select"><i class="bi bi-translate me-1"></i> Idioma</label>
-                        <select id="language-select" onchange="changeLanguage(this.value)">
+
+                        <label
+                            id="lbl-lang-select"
+                            for="language-select"
+                        >
+                            <i class="bi bi-translate me-1"></i>
+                            Idioma
+                        </label>
+
+                        <select
+                            id="language-select"
+                            onchange="changeLanguage(this.value)"
+                        >
                             <option value="es">Español</option>
                             <option value="en">English</option>
                         </select>
+
                     </div>
-                    <div class="settings-group" style="margin-bottom: 0;">
-                        <label id="lbl-theme-select" for="theme-select"><i class="bi bi-palette me-1"></i> Apariencia</label>
-                        <select id="theme-select" onchange="changeTheme(this.value)">
+
+
+                    <div
+                        class="settings-group"
+                        style="margin-bottom:0;"
+                    >
+
+                        <label
+                            id="lbl-theme-select"
+                            for="theme-select"
+                        >
+                            <i class="bi bi-palette me-1"></i>
+                            Apariencia
+                        </label>
+
+                        <select
+                            id="theme-select"
+                            onchange="changeTheme(this.value)"
+                        >
                             <option value="dark">Modo Oscuro</option>
                             <option value="light">Modo Claro</option>
                         </select>
+
                     </div>
+
                 </div>
+
             </section>
 
         </main>
+
     </div>
 
+
     <script src="app.js"></script>
+
 </body>
 </html>
