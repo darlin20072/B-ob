@@ -3486,7 +3486,6 @@ function uploadStory(
 
 }
 
-
 // ------------------------------------------------------------
 // CARGA Y RENDER DE HISTORIAS ACTIVAS
 // ------------------------------------------------------------
@@ -3518,12 +3517,15 @@ function loadStories() {
                 const now =
                     Date.now();
 
+
                 const relevantUids =
                     new Set(
                         currentUserData.following ||
                         []
                     );
 
+
+                // Incluir siempre al usuario actual
                 relevantUids.add(
                     currentUserData.uid
                 );
@@ -3538,6 +3540,7 @@ function loadStories() {
                     const data =
                         doc.data();
 
+
                     if (!relevantUids.has(data.uid))
                         return;
 
@@ -3549,7 +3552,10 @@ function loadStories() {
                             : now;
 
 
-                    if (now - createdMs > STORY_DURATION_MS)
+                    if (
+                        now - createdMs >
+                        STORY_DURATION_MS
+                    )
                         return;
 
 
@@ -3624,10 +3630,12 @@ function renderStoriesList() {
             'stories-users-container'
         );
 
+
     const emptyMsg =
         document.getElementById(
             'stories-empty-message'
         );
+
 
     if (!container)
         return;
@@ -3636,6 +3644,10 @@ function renderStoriesList() {
     container.innerHTML =
         '';
 
+
+    // --------------------------------------------------------
+    // HISTORIAS DE OTROS USUARIOS
+    // --------------------------------------------------------
 
     const entries =
         Array.from(
@@ -3648,21 +3660,185 @@ function renderStoriesList() {
         );
 
 
-    if (entries.length === 0) {
+    // --------------------------------------------------------
+    // HISTORIA DEL USUARIO ACTUAL
+    // --------------------------------------------------------
+
+    const myStories =
+        currentUserData
+            ? storiesByUser.get(
+                currentUserData.uid
+            )
+            : null;
+
+
+    // --------------------------------------------------------
+    // MOSTRAR MENSAJE VACÍO
+    // --------------------------------------------------------
+
+    if (
+        entries.length === 0 &&
+        !myStories
+    ) {
 
         if (emptyMsg)
             emptyMsg.style.display =
                 'block';
 
-        return;
+
+    } else {
+
+        if (emptyMsg)
+            emptyMsg.style.display =
+                'none';
 
     }
 
 
-    if (emptyMsg)
-        emptyMsg.style.display =
-            'none';
+    // --------------------------------------------------------
+    // MI CÍRCULO DE HISTORIA
+    // --------------------------------------------------------
 
+    if (currentUserData) {
+
+        const myItem =
+            document.createElement(
+                'button'
+            );
+
+
+        myItem.type =
+            'button';
+
+
+        // Si tiene historias, mostramos el estado normal.
+        // Si no tiene, también será un círculo para agregar.
+        const hasMyStories =
+            myStories &&
+            myStories.stories &&
+            myStories.stories.length > 0;
+
+
+        let myAllSeen =
+            false;
+
+
+        if (hasMyStories) {
+
+            myAllSeen =
+                myStories.stories.every(
+                    s =>
+                        s.viewedBy &&
+                        s.viewedBy.includes(
+                            currentUserData.uid
+                        )
+                );
+
+        }
+
+
+        myItem.className =
+            `story-item ${
+                hasMyStories
+                    ? (
+                        myAllSeen
+                            ? 'seen'
+                            : 'has-unseen'
+                    )
+                    : 'no-story'
+            }`;
+
+
+        // ----------------------------------------------------
+        // CÍRCULO PROPIO
+        // ----------------------------------------------------
+
+        myItem.innerHTML = `
+
+            <div class="story-avatar-ring">
+
+                <img
+                    src="${currentUserData.avatar || ''}"
+                    alt="${currentUserData.username || 'Tu historia'}"
+                >
+
+                ${
+                    !hasMyStories
+                        ? `
+                            <span
+                                class="story-add-icon"
+                            >
+                                <i class="bi bi-plus"></i>
+                            </span>
+                        `
+                        : ''
+                }
+
+            </div>
+
+            <span>
+                ${
+                    currentUserData.username ||
+                    'Tu historia'
+                }
+            </span>
+
+        `;
+
+
+        // ----------------------------------------------------
+        // AL HACER CLIC EN TU CÍRCULO
+        // ----------------------------------------------------
+
+        myItem.onclick =
+            () => {
+
+                if (hasMyStories) {
+
+                    // Si tienes historias:
+                    // abrir tus propias historias.
+                    openStoryViewer(
+                        currentUserData.uid
+                    );
+
+                } else {
+
+                    // Si no tienes historias:
+                    // buscar el input de historias
+                    // y abrir el selector de archivos.
+                    const storyInput =
+                        document.querySelector(
+                            'input[type="file"][accept*="image"], input[type="file"][accept*="video"]'
+                        );
+
+
+                    if (storyInput) {
+
+                        storyInput.click();
+
+                    } else {
+
+                        console.warn(
+                            "No se encontró el input para subir historias."
+                        );
+
+                    }
+
+                }
+
+            };
+
+
+        container.appendChild(
+            myItem
+        );
+
+    }
+
+
+    // --------------------------------------------------------
+    // HISTORIAS DE LOS USUARIOS QUE SIGUES
+    // --------------------------------------------------------
 
     entries.forEach(entry => {
 
@@ -3682,8 +3858,10 @@ function renderStoriesList() {
                 'button'
             );
 
+
         item.type =
             'button';
+
 
         item.className =
             `story-item ${
@@ -3696,10 +3874,17 @@ function renderStoriesList() {
         item.innerHTML = `
 
             <div class="story-avatar-ring">
-                <img src="${entry.avatar}" alt="${entry.username}">
+
+                <img
+                    src="${entry.avatar}"
+                    alt="${entry.username}"
+                >
+
             </div>
 
-            <span>${entry.username}</span>
+            <span>
+                ${entry.username}
+            </span>
 
         `;
 
@@ -3719,7 +3904,6 @@ function renderStoriesList() {
 
 }
 
-
 // ------------------------------------------------------------
 // VISOR DE HISTORIAS
 // ------------------------------------------------------------
@@ -3729,11 +3913,6 @@ function openStoryViewer(uid) {
     const entries =
         Array.from(
             storiesByUser.values()
-        )
-        .filter(
-            entry =>
-                !currentUserData ||
-                entry.uid !== currentUserData.uid
         );
 
 
