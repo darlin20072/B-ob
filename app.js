@@ -21,41 +21,29 @@ let currentExternalProfileUser = null;
 let currentLang = "es";
 let currentPostCompressedImage = null;
 
-
 // ============================================================
 // USUARIOS VERIFICADOS
 // ============================================================
 
-// AQUÍ PONES LOS UID DE LOS USUARIOS VERIFICADOS.
-//
-// Ejemplo:
-//
-// const VERIFIED_USER_UIDS = [
-//     "abc123",
-//     "xyz456"
-// ];
-//
-// Puedes agregar todos los UID que quieras.
-
 const VERIFIED_USER_UIDS = [
-    "Rq1L5vDXlPSVm2A19ZavIcsDqex1",
-    "83txyWethORuKWjqyIJ01KK6pPS2"
+    "83txyWethORuKWjqyIJ01KK6pPS2",
+    "Rq1L5vDXlPSVm2A19ZavIcsDqex1"
 ];
 
-
-// Comprueba si un usuario está verificado
 function isVerifiedUser(uid) {
     return !!uid && VERIFIED_USER_UIDS.includes(uid);
 }
 
-
-// Devuelve el icono de verificación si el UID está en la lista
 function getVerifiedBadge(uid) {
     return isVerifiedUser(uid)
         ? ' <i class="bi bi-patch-check-fill" aria-label="Usuario verificado" title="Usuario verificado"></i>'
         : '';
 }
 
+
+// ============================================================
+// TRADUCCIONES
+// ============================================================
 
 const translations = {
     es: {
@@ -151,6 +139,7 @@ function decryptMessage(encoded) {
         return "[Mensaje cifrado incompatible]";
 
     }
+
 }
 
 
@@ -164,11 +153,14 @@ document.querySelectorAll('.avatar-option').forEach(img => {
 
         document
             .querySelectorAll('.avatar-option')
-            .forEach(el => el.classList.remove('selected'));
+            .forEach(el =>
+                el.classList.remove('selected')
+            );
 
         e.target.classList.add('selected');
 
-        selectedAvatarUrl = e.target.getAttribute('data-url');
+        selectedAvatarUrl =
+            e.target.getAttribute('data-url');
 
     });
 
@@ -210,22 +202,24 @@ function toggleAuthMode() {
     const authToggleTxt =
         document.getElementById('txt-auth-toggle');
 
-    const t = translations[currentLang];
+    const t =
+        translations[currentLang];
 
-    if (submitAuthBtn) {
-
+    if (submitAuthBtn)
         submitAuthBtn.innerHTML =
-            `<span>${isRegisterMode ? t.regBtn : t.logBtn}</span>
-             <i class="bi bi-arrow-right"></i>`;
+            `<span>${
+                isRegisterMode
+                    ? t.regBtn
+                    : t.logBtn
+            }</span>
+            <i class="bi bi-arrow-right"></i>`;
 
-    }
-
-    if (authToggleTxt) {
-
+    if (authToggleTxt)
         authToggleTxt.innerText =
-            isRegisterMode ? t.switchReg : t.switchLog;
+            isRegisterMode
+                ? t.switchReg
+                : t.switchLog;
 
-    }
 }
 
 
@@ -260,7 +254,9 @@ async function handleAuth() {
         (isRegisterMode && !username)
     ) {
 
-        alert("Por favor completa todos los campos requeridos.");
+        alert(
+            "Por favor completa todos los campos requeridos."
+        );
 
         return;
 
@@ -276,29 +272,39 @@ async function handleAuth() {
                     password
                 );
 
-            const user = res.user;
+            const user =
+                res.user;
 
             await db
                 .collection("users")
                 .doc(user.uid)
                 .set({
 
-                    uid: user.uid,
+                    uid:
+                        user.uid,
 
-                    username: username,
+                    username:
+                        username,
 
-                    email: email,
+                    email:
+                        email,
 
-                    avatar: selectedAvatarUrl,
+                    avatar:
+                        selectedAvatarUrl,
 
-                    bio: "Hola, estoy usando Nox Direct.",
+                    bio:
+                        "Hola, estoy usando Nox Direct.",
 
-                    followers: [],
+                    followers:
+                        [],
 
-                    following: [],
+                    following:
+                        [],
 
                     createdAt:
-                        firebase.firestore.FieldValue.serverTimestamp()
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp()
 
                 });
 
@@ -338,9 +344,7 @@ function logout() {
         .then(() => {
 
             currentUserData = null;
-
             currentActiveChatUser = null;
-
             currentExternalProfileUser = null;
 
         })
@@ -377,7 +381,6 @@ auth.onAuthStateChanged((user) => {
             appScreen.classList.remove('hidden');
 
         loadUserData(user.uid);
-
         loadPosts();
 
     } else {
@@ -442,7 +445,10 @@ async function loadUserData(uid) {
 // CAMBIO DE SECCIÓN
 // ============================================================
 
-function switchSection(sectionId, btnElement) {
+function switchSection(
+    sectionId,
+    btnElement
+) {
 
     document
         .querySelectorAll('.section-view')
@@ -500,7 +506,9 @@ async function viewUserProfile(uid) {
 
         if (!doc.exists) {
 
-            alert("El usuario no existe.");
+            alert(
+                "El usuario no existe."
+            );
 
             return;
 
@@ -544,7 +552,8 @@ async function viewUserProfile(uid) {
 
         if (avatarElem)
             avatarElem.src =
-                currentExternalProfileUser.avatar || "";
+                currentExternalProfileUser.avatar ||
+                "";
 
 
         if (usernameElem)
@@ -594,9 +603,12 @@ async function viewUserProfile(uid) {
         }
 
 
+        // CARGAR PUBLICACIONES + REPOSTS
         loadExternalUserPosts(uid);
 
-        switchSection('user-profile');
+        switchSection(
+            'user-profile'
+        );
 
     } catch (e) {
 
@@ -648,13 +660,15 @@ async function toggleFollowUser() {
         isFollowing
     );
 
-    await viewUserProfile(targetUid);
+    await viewUserProfile(
+        targetUid
+    );
 
 }
 
 
 // ============================================================
-// BÚSQUEDA DE USUARIOS
+// BÚSQUEDA
 // ============================================================
 
 async function searchUsers(query) {
@@ -667,9 +681,13 @@ async function searchUsers(query) {
     if (!resultsContainer)
         return;
 
-    resultsContainer.innerHTML = "";
+    resultsContainer.innerHTML =
+        "";
 
-    if (!query || query.length < 2)
+    if (
+        !query ||
+        query.length < 2
+    )
         return;
 
     try {
@@ -693,7 +711,8 @@ async function searchUsers(query) {
 
         snapshot.forEach(doc => {
 
-            const u = doc.data();
+            const u =
+                doc.data();
 
             if (
                 !currentUserData ||
@@ -710,7 +729,9 @@ async function searchUsers(query) {
 
 
             const item =
-                document.createElement('div');
+                document.createElement(
+                    'div'
+                );
 
             item.className =
                 "user-list-item";
@@ -743,7 +764,11 @@ async function searchUsers(query) {
                             class="ustatus"
                             style="display:block; font-size:11.5px; color:var(--text-secondary);"
                         >
-                            ${u.bio ? u.bio.substring(0, 30) : ''}
+                            ${
+                                u.bio
+                                    ? u.bio.substring(0, 30)
+                                    : ''
+                            }
                         </span>
 
                     </div>
@@ -755,12 +780,18 @@ async function searchUsers(query) {
                     style="width: auto; padding: 6px 12px;"
                     onclick="toggleFollow('${u.uid}', ${isFollowing})"
                 >
-                    ${isFollowing ? 'Siguiendo' : 'Seguir'}
+                    ${
+                        isFollowing
+                            ? 'Siguiendo'
+                            : 'Seguir'
+                    }
                 </button>
 
             `;
 
-            resultsContainer.appendChild(item);
+            resultsContainer.appendChild(
+                item
+            );
 
         });
 
@@ -777,7 +808,7 @@ async function searchUsers(query) {
 
 
 // ============================================================
-// TOGGLE FOLLOW
+// FOLLOW
 // ============================================================
 
 async function toggleFollow(
@@ -792,12 +823,14 @@ async function toggleFollow(
         currentUserData.uid;
 
     const myRef =
-        db.collection("users")
-          .doc(myUid);
+        db
+            .collection("users")
+            .doc(myUid);
 
     const targetRef =
-        db.collection("users")
-          .doc(targetUid);
+        db
+            .collection("users")
+            .doc(targetUid);
 
 
     const batch =
@@ -810,8 +843,11 @@ async function toggleFollow(
             myRef,
             {
                 following:
-                    firebase.firestore.FieldValue
-                        .arrayRemove(targetUid)
+                    firebase.firestore
+                        .FieldValue
+                        .arrayRemove(
+                            targetUid
+                        )
             }
         );
 
@@ -819,8 +855,11 @@ async function toggleFollow(
             targetRef,
             {
                 followers:
-                    firebase.firestore.FieldValue
-                        .arrayRemove(myUid)
+                    firebase.firestore
+                        .FieldValue
+                        .arrayRemove(
+                            myUid
+                        )
             }
         );
 
@@ -830,8 +869,11 @@ async function toggleFollow(
             myRef,
             {
                 following:
-                    firebase.firestore.FieldValue
-                        .arrayUnion(targetUid)
+                    firebase.firestore
+                        .FieldValue
+                        .arrayUnion(
+                            targetUid
+                        )
             }
         );
 
@@ -839,8 +881,11 @@ async function toggleFollow(
             targetRef,
             {
                 followers:
-                    firebase.firestore.FieldValue
-                        .arrayUnion(myUid)
+                    firebase.firestore
+                        .FieldValue
+                        .arrayUnion(
+                            myUid
+                        )
             }
         );
 
@@ -848,17 +893,21 @@ async function toggleFollow(
         db.collection("notifications")
             .add({
 
-                to: targetUid,
+                to:
+                    targetUid,
 
-                from: myUid,
+                from:
+                    myUid,
 
                 fromUsername:
                     currentUserData.username,
 
-                type: "follow",
+                type:
+                    "follow",
 
                 timestamp:
-                    firebase.firestore.FieldValue
+                    firebase.firestore
+                        .FieldValue
                         .serverTimestamp()
 
             });
@@ -873,7 +922,8 @@ async function toggleFollow(
 
         currentUserData.following =
             currentUserData.following.filter(
-                id => id !== targetUid
+                id =>
+                    id !== targetUid
             );
 
     } else {
@@ -939,11 +989,13 @@ async function loadSocialData() {
                     'notif-dot'
                 );
 
+
             if (!notifList)
                 return;
 
 
-            notifList.innerHTML = "";
+            notifList.innerHTML =
+                "";
 
 
             if (snapshot.empty) {
@@ -971,7 +1023,9 @@ async function loadSocialData() {
                     doc.data();
 
                 const div =
-                    document.createElement('div');
+                    document.createElement(
+                        'div'
+                    );
 
                 div.style.padding =
                     "6px 0";
@@ -979,12 +1033,12 @@ async function loadSocialData() {
                 div.style.borderBottom =
                     "1px solid var(--border-color)";
 
-
                 div.innerHTML =
                     `@${n.fromUsername}${getVerifiedBadge(n.from)} comenzó a seguirte.`;
 
-
-                notifList.appendChild(div);
+                notifList.appendChild(
+                    div
+                );
 
             });
 
@@ -1002,25 +1056,33 @@ async function loadSocialData() {
         );
 
 
-    if (!mutualContainer || !chatThreads)
+    if (
+        !mutualContainer ||
+        !chatThreads
+    )
         return;
 
 
-    mutualContainer.innerHTML = "";
+    mutualContainer.innerHTML =
+        "";
 
-    chatThreads.innerHTML = "";
+    chatThreads.innerHTML =
+        "";
 
 
     const following =
-        currentUserData.following || [];
+        currentUserData.following ||
+        [];
 
     const followers =
-        currentUserData.followers || [];
+        currentUserData.followers ||
+        [];
 
 
     const mutuals =
         following.filter(
-            uid => followers.includes(uid)
+            uid =>
+                followers.includes(uid)
         );
 
 
@@ -1067,7 +1129,9 @@ async function loadSocialData() {
 
 
         const mItem =
-            document.createElement('div');
+            document.createElement(
+                'div'
+            );
 
         mItem.className =
             "user-list-item";
@@ -1113,12 +1177,12 @@ async function loadSocialData() {
 
 
         const threadItem =
-            document.createElement('div');
-
+            document.createElement(
+                'div'
+            );
 
         threadItem.className =
             "chat-thread-item";
-
 
         threadItem.style.cssText =
             "display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;";
@@ -1236,7 +1300,9 @@ function openChat(
 
     } else {
 
-        switchSection('chat');
+        switchSection(
+            'chat'
+        );
 
     }
 
@@ -1287,7 +1353,8 @@ function loadMessages() {
                 return;
 
 
-            container.innerHTML = "";
+            container.innerHTML =
+                "";
 
 
             snapshot.forEach(doc => {
@@ -1300,7 +1367,6 @@ function loadMessages() {
                         msg.encryptedPayload
                     );
 
-
                 const isSent =
                     msg.sender ===
                     currentUserData.uid;
@@ -1311,7 +1377,6 @@ function loadMessages() {
                         'div'
                     );
 
-
                 bubble.className =
                     `message-bubble ${
                         isSent
@@ -1319,10 +1384,8 @@ function loadMessages() {
                             : 'received'
                     }`;
 
-
                 bubble.innerText =
                     decryptedText;
-
 
                 container.appendChild(
                     bubble
@@ -1356,7 +1419,6 @@ async function sendMessage() {
         document.getElementById(
             'message-input'
         );
-
 
     if (!input)
         return;
@@ -1420,13 +1482,15 @@ async function sendMessage() {
                 encrypted,
 
             timestamp:
-                firebase.firestore.FieldValue
+                firebase.firestore
+                    .FieldValue
                     .serverTimestamp()
 
         });
 
 
-    input.value = "";
+    input.value =
+        "";
 
 }
 
@@ -1508,7 +1572,8 @@ function renderProfile() {
 
     if (editBio)
         editBio.value =
-            currentUserData.bio || "";
+            currentUserData.bio ||
+            "";
 
 }
 
@@ -1527,7 +1592,6 @@ async function updateProfile() {
         document.getElementById(
             'edit-bio'
         );
-
 
     if (!editBioElem)
         return;
@@ -1553,14 +1617,13 @@ async function updateProfile() {
 
 
 // ============================================================
-// SUBIDA DE AVATAR
+// AVATAR
 // ============================================================
 
 function handleAvatarUpload(event) {
 
     const file =
         event.target.files[0];
-
 
     if (!file)
         return;
@@ -1576,7 +1639,6 @@ function handleAvatarUpload(event) {
             const img =
                 new Image();
 
-
             img.src =
                 e.target.result;
 
@@ -1589,13 +1651,11 @@ function handleAvatarUpload(event) {
                             'canvas'
                         );
 
-
                     const MAX_WIDTH =
                         120;
 
                     const MAX_HEIGHT =
                         120;
-
 
                     let width =
                         img.width;
@@ -1677,7 +1737,8 @@ function handleAvatarUpload(event) {
                         db
                     ) {
 
-                        db.collection('users')
+                        db
+                            .collection('users')
                             .doc(
                                 currentUserData.uid
                             )
@@ -1722,7 +1783,6 @@ function handlePostImageSelect(event) {
     const file =
         event.target.files[0];
 
-
     if (!file)
         return;
 
@@ -1737,7 +1797,6 @@ function handlePostImageSelect(event) {
             const img =
                 new Image();
 
-
             img.src =
                 e.target.result;
 
@@ -1750,13 +1809,11 @@ function handlePostImageSelect(event) {
                             'canvas'
                         );
 
-
                     const MAX_WIDTH =
                         600;
 
                     const MAX_HEIGHT =
                         600;
-
 
                     let width =
                         img.width;
@@ -1885,13 +1942,13 @@ function removePostImage() {
             'hidden'
         );
 
-
     if (previewImg)
-        previewImg.src = '';
-
+        previewImg.src =
+            '';
 
     if (fileInput)
-        fileInput.value = '';
+        fileInput.value =
+            '';
 
 }
 
@@ -1916,12 +1973,10 @@ if (postTextInput) {
                 300 -
                 this.value.length;
 
-
             const counter =
                 document.getElementById(
                     'post-char-count'
                 );
-
 
             if (counter)
                 counter.innerText =
@@ -1943,7 +1998,6 @@ function createPost() {
         document.getElementById(
             'post-text-input'
         );
-
 
     if (!textInput)
         return;
@@ -2003,7 +2057,8 @@ function createPost() {
             [],
 
         createdAt:
-            firebase.firestore.FieldValue
+            firebase.firestore
+                .FieldValue
                 .serverTimestamp()
 
     };
@@ -2013,7 +2068,8 @@ function createPost() {
         .add(postData)
         .then(() => {
 
-            textInput.value = '';
+            textInput.value =
+                '';
 
             const charCount =
                 document.getElementById(
@@ -2038,7 +2094,7 @@ function createPost() {
 
 
 // ============================================================
-// CARGAR POSTS
+// CARGAR POSTS GLOBALES
 // ============================================================
 
 function loadPosts() {
@@ -2078,12 +2134,10 @@ function loadPosts() {
                 globalContainer.innerHTML =
                     '<p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 20px;">No hay publicaciones aún.</p>';
 
-
                 if (myProfileContainer)
 
                     myProfileContainer.innerHTML =
                         '<p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 10px;">Aún no has publicado nada.</p>';
-
 
                 return;
 
@@ -2111,7 +2165,6 @@ function loadPosts() {
                     const isOwner =
                         data.uid ===
                         currentUserData.uid;
-
 
                     const isRepostedByMe =
                         data.reposts &&
@@ -2150,12 +2203,153 @@ function loadPosts() {
 
 
 // ============================================================
-// POSTS DE USUARIO EXTERNO
+// PERFIL EXTERNO:
+// PUBLICACIONES PROPIAS + REPOSTS
 // ============================================================
 
 function loadExternalUserPosts(
     targetUid
 ) {
+
+    const extContainer =
+        document.getElementById(
+            'ext-user-posts-container'
+        );
+
+
+    if (!extContainer)
+        return;
+
+
+    let ownPosts =
+        new Map();
+
+    let repostedPosts =
+        new Map();
+
+
+    const renderExternalPosts =
+        () => {
+
+            extContainer.innerHTML =
+                '';
+
+
+            const allPosts =
+                new Map();
+
+
+            // --------------------------------------------
+            // POSTS CREADOS POR EL USUARIO
+            // --------------------------------------------
+
+            ownPosts.forEach(
+                (data, id) => {
+
+                    allPosts.set(
+                        id,
+                        {
+                            data:
+                                data,
+
+                            badge:
+                                null
+                        }
+                    );
+
+                }
+            );
+
+
+            // --------------------------------------------
+            // POSTS REPOSTEADOS POR EL USUARIO
+            // --------------------------------------------
+
+            repostedPosts.forEach(
+                (data, id) => {
+
+                    // Si el post también es suyo,
+                    // no lo mostramos dos veces.
+                    if (!allPosts.has(id)) {
+
+                        allPosts.set(
+                            id,
+                            {
+                                data:
+                                    data,
+
+                                badge:
+                                    "Reposteado por @" +
+                                    (
+                                        currentExternalProfileUser?.username ||
+                                        "este usuario"
+                                    )
+                            }
+                        );
+
+                    }
+
+                }
+            );
+
+
+            const posts =
+                Array.from(
+                    allPosts.entries()
+                );
+
+
+            // Ordenar por fecha más reciente
+            posts.sort(
+                (a, b) => {
+
+                    const timeA =
+                        a[1].data.createdAt?.toMillis
+                            ? a[1].data.createdAt.toMillis()
+                            : 0;
+
+
+                    const timeB =
+                        b[1].data.createdAt?.toMillis
+                            ? b[1].data.createdAt.toMillis()
+                            : 0;
+
+
+                    return timeB - timeA;
+
+                }
+            );
+
+
+            if (posts.length === 0) {
+
+                extContainer.innerHTML =
+                    '<p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 10px;">Este usuario no tiene publicaciones ni reposts.</p>';
+
+                return;
+
+            }
+
+
+            posts.forEach(
+                ([postId, postInfo]) => {
+
+                    renderPostCard(
+                        postId,
+                        postInfo.data,
+                        extContainer,
+                        postInfo.badge
+                    );
+
+                }
+            );
+
+        };
+
+
+    // ========================================================
+    // PUBLICACIONES CREADAS POR EL USUARIO
+    // ========================================================
 
     db.collection('posts')
         .where(
@@ -2163,53 +2357,80 @@ function loadExternalUserPosts(
             '==',
             targetUid
         )
-        .orderBy(
-            'createdAt',
-            'desc'
-        )
-        .onSnapshot(snapshot => {
+        .onSnapshot(
+            snapshot => {
 
-            const extContainer =
-                document.getElementById(
-                    'ext-user-posts-container'
+                ownPosts.clear();
+
+
+                snapshot.forEach(doc => {
+
+                    ownPosts.set(
+                        doc.id,
+                        doc.data()
+                    );
+
+                });
+
+
+                renderExternalPosts();
+
+            },
+            error => {
+
+                console.error(
+                    "Error al cargar publicaciones del perfil:",
+                    error
                 );
-
-
-            if (!extContainer)
-                return;
-
-
-            extContainer.innerHTML =
-                '';
-
-
-            if (snapshot.empty) {
-
-                extContainer.innerHTML =
-                    '<p style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 10px;">Este usuario no tiene publicaciones.</p>';
-
-                return;
 
             }
+        );
 
 
-            snapshot.forEach(doc => {
+    // ========================================================
+    // PUBLICACIONES REPOSTEADAS POR EL USUARIO
+    // ========================================================
 
-                renderPostCard(
-                    doc.id,
-                    doc.data(),
-                    extContainer
+    db.collection('posts')
+        .where(
+            'reposts',
+            'array-contains',
+            targetUid
+        )
+        .onSnapshot(
+            snapshot => {
+
+                repostedPosts.clear();
+
+
+                snapshot.forEach(doc => {
+
+                    repostedPosts.set(
+                        doc.id,
+                        doc.data()
+                    );
+
+                });
+
+
+                renderExternalPosts();
+
+            },
+            error => {
+
+                console.error(
+                    "Error al cargar reposts del perfil:",
+                    error
                 );
 
-            });
-
-        });
+            }
+        );
 
 }
 
 
 // ============================================================
-// TARJETA DE POST
+// RENDERIZAR POST
 // ============================================================
 
 function renderPostCard(
@@ -2363,7 +2584,9 @@ function renderPostCard(
 
             <button
                 class="tweet-action-btn ${
-                    isLiked ? 'liked' : ''
+                    isLiked
+                        ? 'liked'
+                        : ''
                 }"
                 onclick="toggleLike('${postId}')"
             >
@@ -2376,7 +2599,9 @@ function renderPostCard(
                     }"
                 ></i>
 
-                <span>${likesCount}</span>
+                <span>
+                    ${likesCount}
+                </span>
 
             </button>
 
@@ -2404,7 +2629,9 @@ function renderPostCard(
 
                 <i class="bi bi-repeat"></i>
 
-                <span>${repostsCount}</span>
+                <span>
+                    ${repostsCount}
+                </span>
 
             </button>
 
@@ -2445,8 +2672,8 @@ function renderPostCard(
                 <button
                     class="btn-primary"
                     style="
-                        width:auto;
-                        padding:6px 12px;
+                        width: auto;
+                        padding: 6px 12px;
                         margin:0;
                         font-size:12px;
                     "
@@ -2462,9 +2689,14 @@ function renderPostCard(
     `;
 
 
-    container.appendChild(card);
+    container.appendChild(
+        card
+    );
 
-    loadComments(postId);
+
+    loadComments(
+        postId
+    );
 
 }
 
@@ -2473,15 +2705,18 @@ function renderPostCard(
 // LIKE
 // ============================================================
 
-function toggleLike(postId) {
+function toggleLike(
+    postId
+) {
 
     if (!currentUserData)
         return;
 
 
     const postRef =
-        db.collection('posts')
-          .doc(postId);
+        db
+            .collection('posts')
+            .doc(postId);
 
 
     db.runTransaction(
@@ -2548,15 +2783,18 @@ function toggleLike(postId) {
 // REPOST
 // ============================================================
 
-function toggleRepost(postId) {
+function toggleRepost(
+    postId
+) {
 
     if (!currentUserData)
         return;
 
 
     const postRef =
-        db.collection('posts')
-          .doc(postId);
+        db
+            .collection('posts')
+            .doc(postId);
 
 
     db.runTransaction(
@@ -2623,7 +2861,9 @@ function toggleRepost(postId) {
 // COMENTARIOS
 // ============================================================
 
-function toggleCommentBox(postId) {
+function toggleCommentBox(
+    postId
+) {
 
     const box =
         document.getElementById(
@@ -2639,7 +2879,9 @@ function toggleCommentBox(postId) {
 }
 
 
-function addComment(postId) {
+function addComment(
+    postId
+) {
 
     if (!currentUserData)
         return;
@@ -2659,7 +2901,8 @@ function addComment(postId) {
         return;
 
 
-    db.collection('posts')
+    db
+        .collection('posts')
         .doc(postId)
         .collection('comments')
         .add({
@@ -2675,13 +2918,15 @@ function addComment(postId) {
                 text,
 
             createdAt:
-                firebase.firestore.FieldValue
+                firebase.firestore
+                    .FieldValue
                     .serverTimestamp()
 
         })
         .then(() => {
 
-            input.value = '';
+            input.value =
+                '';
 
         })
         .catch(err =>
@@ -2694,7 +2939,9 @@ function addComment(postId) {
 }
 
 
-function loadComments(postId) {
+function loadComments(
+    postId
+) {
 
     const listContainer =
         document.getElementById(
@@ -2706,56 +2953,59 @@ function loadComments(postId) {
         return;
 
 
-    db.collection('posts')
+    db
+        .collection('posts')
         .doc(postId)
         .collection('comments')
         .orderBy(
             'createdAt',
             'asc'
         )
-        .onSnapshot(snapshot => {
-
-            listContainer.innerHTML =
-                '';
-
-
-            if (snapshot.empty) {
+        .onSnapshot(
+            snapshot => {
 
                 listContainer.innerHTML =
-                    '<span style="font-size: 11px; color: var(--text-secondary);">Sin comentarios aún.</span>';
-
-                return;
-
-            }
+                    '';
 
 
-            snapshot.forEach(doc => {
+                if (snapshot.empty) {
 
-                const cData =
-                    doc.data();
+                    listContainer.innerHTML =
+                        '<span style="font-size: 11px; color: var(--text-secondary);">Sin comentarios aún.</span>';
+
+                    return;
+
+                }
 
 
-                const cItem =
-                    document.createElement(
-                        'div'
+                snapshot.forEach(doc => {
+
+                    const cData =
+                        doc.data();
+
+
+                    const cItem =
+                        document.createElement(
+                            'div'
+                        );
+
+
+                    cItem.className =
+                        'comment-item';
+
+
+                    cItem.innerHTML =
+                        `<strong>@${cData.username}${getVerifiedBadge(cData.uid)}:</strong> ${escapeHTML(cData.text)}`;
+
+
+                    listContainer.appendChild(
+                        cItem
                     );
 
+                });
 
-                cItem.className =
-                    'comment-item';
-
-
-                cItem.innerHTML =
-                    `<strong>@${cData.username}${getVerifiedBadge(cData.uid)}:</strong> ${escapeHTML(cData.text)}`;
-
-
-                listContainer.appendChild(
-                    cItem
-                );
-
-            });
-
-        });
+            }
+        );
 
 }
 
@@ -2764,18 +3014,30 @@ function loadComments(postId) {
 // ESCAPAR HTML
 // ============================================================
 
-function escapeHTML(str) {
+function escapeHTML(
+    str
+) {
 
     return str.replace(
         /[&<>'"]/g,
 
         tag =>
             ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                "'": '&#39;',
-                '"': '&quot;'
+                '&':
+                    '&amp;',
+
+                '<':
+                    '&lt;',
+
+                '>':
+                    '&gt;',
+
+                "'":
+                    '&#39;',
+
+                '"':
+                    '&quot;'
+
             }[tag] || tag)
     );
 
@@ -2786,7 +3048,9 @@ function escapeHTML(str) {
 // TEMA
 // ============================================================
 
-function changeTheme(theme) {
+function changeTheme(
+    theme
+) {
 
     document.documentElement
         .setAttribute(
@@ -2801,9 +3065,13 @@ function changeTheme(theme) {
 // IDIOMA
 // ============================================================
 
-function changeLanguage(lang) {
+function changeLanguage(
+    lang
+) {
 
-    currentLang = lang;
+    currentLang =
+        lang;
+
 
     const t =
         translations[lang];
@@ -2817,10 +3085,13 @@ function changeLanguage(lang) {
         (id, text) => {
 
             const el =
-                document.getElementById(id);
+                document.getElementById(
+                    id
+                );
 
             if (el)
-                el.innerText = text;
+                el.innerText =
+                    text;
 
         };
 
@@ -2891,7 +3162,6 @@ function changeLanguage(lang) {
             'btn-submit-auth'
         );
 
-
     const authToggleTxt =
         document.getElementById(
             'txt-auth-toggle'
@@ -2906,7 +3176,7 @@ function changeLanguage(lang) {
                     ? t.regBtn
                     : t.logBtn
             }</span>
-             <i class="bi bi-arrow-right"></i>`;
+            <i class="bi bi-arrow-right"></i>`;
 
     }
 
