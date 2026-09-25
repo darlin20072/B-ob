@@ -18,6 +18,7 @@ VARIABLES
 --bg-surface: #050505;
 --bg-elevated: #0a0a0a;
 --bg-hover: #111111;
+--bg-navbarbt:#111111c2;
 
 --border-color: #262626;
 --border-soft: #1c1c1c;
@@ -30,9 +31,9 @@ VARIABLES
 --accent-hover: #1685d0;
 --accent-text: #ffffff;
 
---instagram-pink: #e1306c;
---instagram-purple: #833ab4;
---instagram-orange: #f77737;
+--instagram-pink: #69ddfa;
+--instagram-purple: #3a38ac;
+--instagram-orange: #c7ffe5;
 
 --msg-sent: #1d9bf0;
 --msg-received: #1a1a1a;
@@ -60,6 +61,8 @@ LIGHT THEME
 --bg-surface: #ffffff;
 --bg-elevated: #ffffff;
 --bg-hover: #f5f5f5;
+--bg-navbarbt:#f5f5f5b6;
+
 
 --border-color: #dbdbdb;
 --border-soft: #eeeeee;
@@ -468,7 +471,7 @@ transform: scale(1.08);
 .dock-btn.active {
 
 
-background: var(--bg-hover);
+background: var(--bg-navbarbt);
 
 font-weight: 700;
 
@@ -1580,47 +1583,30 @@ background: var(--bg-hover);
 
 }
 
+/* 1. Asegurar que el cuerpo del tweet no limite la altura */
 .tweet-body {
-
-
-font-size: 15px;
-
-color: var(--text-primary);
-
-line-height: 1.5;
-
-word-break: break-word;
-
-margin:
-    0 0 12px 53px;
-
-
+    font-size: 15px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    word-break: break-word;
+    margin: 0 0 12px 53px;
+    height: auto;
+    overflow: visible;
 }
 
+/* 2. Ajuste definitivo para la imagen */
 .tweet-card img:not(.tweet-avatar),
 .tweet-card .tweet-body img {
-
-
-width: calc(100% - 53px);
-
-max-height: 430px;
-
-height: auto;
-
-object-fit: cover;
-
-background: var(--bg-hover);
-
-border-radius: 14px;
-
-display: block;
-
-margin:
-    10px 0 10px 53px;
-
-
+    width: 100%; /* O usa calc si necesitas mantener el margen exacto de los 47px */
+    max-width: 100%;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain;
+    background: var(--accent);
+    border-radius: 10px;
+    display: block;
+    margin-top: 0;
 }
-
 .tweet-footer {
 
 
@@ -3117,15 +3103,21 @@ body {
     right: 0;
     bottom: 0;
 
-    width: 100%;
-
+    width: 95%;
+    margin-left: 2%;
+    margin-bottom: 2%;
+    
+box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.35),
+        inset 0 -1px 0 rgba(255,255,255,.08),
+        0 10px 35px rgba(0,0,0,.18);
     height: 62px;
 
     padding:
         5px 8px;
 
     background:
-        rgba(0,0,0,.92);
+        rgba(0, 0, 0, 0.603);
 
     border-top:
         1px solid
@@ -3135,8 +3127,9 @@ body {
 
     z-index: 1000;
 
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+     backdrop-filter: url(#edgeGlass)   ;
+    -webkit-backdrop-filter: blur(4px) ;
+    border-radius: 25px;
 
 }
 
@@ -3178,19 +3171,24 @@ body {
 
 .dock-btn {
 
-    width: 54px;
+    width: 67px;
     height: 52px;
 
-    border-radius: 12px;
+    border-radius: 50px;
 
     justify-content: center;
 
     padding: 0;
 
     gap: 0;
+    
+    
 
 }
 
+.dock-btn.active {
+    backdrop-filter: blur(4.5px);
+}
 
 .dock-btn span {
 
@@ -3322,13 +3320,14 @@ h2 {
 
     padding:
         14px 16px;
+    
 
 }
 
 
 .tweet-body {
 
-    margin-left: 51px;
+    margin-left: 5px;
 
 }
 
@@ -3336,9 +3335,9 @@ h2 {
 .tweet-card img:not(.tweet-avatar),
 .tweet-card .tweet-body img {
 
-    width: calc(100% - 51px);
+    width: calc(100% - 0px);
 
-    margin-left: 51px;
+    margin-left: 0px;
 
     max-height: 350px;
 

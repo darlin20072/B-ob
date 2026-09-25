@@ -24,6 +24,201 @@
 <body>
 
 
+
+
+    
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <filter id="edgeGlass" color-interpolation-filters="sRGB">
+
+      <!-- 1. Alpha del objeto -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0" result="alpha"/>
+
+      <!-- 2. Expandir y contraer para sacar bordes -->
+      <feMorphology in="alpha" operator="dilate" radius="15" result="dilate"/>
+      <feMorphology in="alpha" operator="erode" radius="15" result="erode"/>
+
+      <!-- 3. Solo borde = dilate - erode -->
+      <feComposite in="dilate" in2="erode" operator="xor" result="edgeSharp"/>
+
+      <!-- 4. Suavizar la máscara del borde para fundir el corte -->
+      <feGaussianBlur in="edgeSharp" stdDeviation="7" result="edge"/>
+
+      <!-- 5. Ruido para distorsión -->
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.02"
+        numOctaves="2"
+        seed="3"
+        result="noise"
+      />
+
+      <!-- 6. Blur del ruido -->
+      <feGaussianBlur in="noise" stdDeviation="0" result="blurNoise"/>
+
+      <!-- 7. Distorsión SOLO del borde -->
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="blurNoise"
+        scale="85"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="distorted"
+      />
+
+      <!-- 8. Máscara de borde base -->
+      <feComposite
+        in="distorted"
+        in2="edge"
+        operator="in"
+        result="edgeOnlyBase"
+      />
+
+      <!-- 9. ABERRACIÓN CROMÁTICA SOLO EN EL BORDE (Canal Rojo, Verde, Azul) -->
+      <feOffset in="edgeOnlyBase" dx="-1" dy="0" result="redOffset"/>
+      <feColorMatrix in="redOffset" type="matrix" values="
+        1 0 0 0 0
+        0 0 0 0 0
+        0 0 0 0 0
+        0 0 0 1 0" result="redChannel"/>
+
+      <feColorMatrix in="edgeOnlyBase" type="matrix" values="
+        0 0 0 0 0
+        0 1 0 0 0
+        0 0 0 0 0
+        0 0 0 1 0" result="greenChannel"/>
+
+      <feOffset in="edgeOnlyBase" dx="1" dy="0" result="blueOffset"/>
+      <feColorMatrix in="blueOffset" type="matrix" values="
+        0 0 0 0 0
+        0 0 0 0 0
+        0 0 1 0 0
+        0 0 0 1 0" result="blueChannel"/>
+
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rgBord"/>
+      <feBlend in="rgBord" in2="blueChannel" mode="screen" result="edgeOnlyAberrated"/>
+
+      <!-- 10. Centro limpio -->
+      <feComposite
+        in="SourceGraphic"
+        in2="edge"
+        operator="out"
+        result="centerClean"/>
+
+      <!-- 11. Combinar centro + borde aberrado -->
+      <feComposite
+        in="centerClean"
+        in2="edgeOnlyAberrated"
+        operator="over"
+        result="finalComposition"/>
+
+      <!-- === NUEVO: 12. BLUR GENERAL DE LA COMPOSICIÓN === -->
+      <feGaussianBlur in="finalComposition" stdDeviation="1.5" />
+
+    </filter>
+  </defs>
+</svg>
+
+
+
+<svg style="position: absolute; width: 0; height: 0;">
+  <defs>
+    <filter id="waos" color-interpolation-filters="sRGB">
+
+      <!-- Suavizado inicial -->
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
+
+      <!-- Ruido tipo líquido -->
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.01 0.02"
+        numOctaves="3"
+        seed="8"
+        result="noise"
+      />
+
+      <!-- Distorsión tipo glass -->
+      <feDisplacementMap
+        in="blur"
+        in2="noise"
+        scale="25"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="displaced"
+      />
+
+      <!-- Suavizado final para efecto vidrio -->
+      <feGaussianBlur in="displaced" stdDeviation="0.5"/>
+
+    </filter>
+  </defs>
+</svg>
+
+
+
+
+
+    <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;">
+    <filter id="filtroVidrioMascara" x="-50%" y="-50%" width="200%" height="200%">
+      
+      <!-- 1. Turbulencia (ondas) -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.005" numOctaves="2" result="ruido" />
+
+      <!-- 2. Máscara radial: centro blanco (sin efecto), bordes negros (con efecto) -->
+      <feImage result="mascaraRadial"
+        href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJhZGlhbEdyYWRpZW50IGlkPSJyIiBjeD0iMTAwIiBjeT0iMTAwIiByPSI4MCI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZmIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDAwIi8+PC9yYWRpYWxHcmFkaWVudD48cmVjdCBmaWxsPSJ1cmwoI3IpIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIvPjwvc3ZnPg=="
+        preserveAspectRatio="none"
+      />
+
+      <!-- 3. Composición: ondas * máscara radial -->
+      <feComposite in="ruido" in2="mascaraRadial" operator="in" result="ondasLimitadas" />
+
+      <!-- 4. Aplicar desplazamiento -->
+      <feDisplacementMap in="SourceGraphic" in2="ondasLimitadas" scale="200"
+        xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </svg>
+
+
+
+    
+
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <filter id="chromatic-aberration" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <!-- Desplazar rojo -->
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red" />
+      <feColorMatrix in="red" type="matrix" values="
+         1 0 0 0 0
+         0 0 0 0 0
+         0 0 0 0 0
+         0 0 0 1 0" result="redOnly" />
+      
+      <!-- Desplazar verde -->
+      <feOffset in="SourceGraphic" dx="0" dy="0" result="green" />
+      <feColorMatrix in="green" type="matrix" values="
+         0 0 0 0 0
+         0 1 0 0 0
+         0 0 0 0 0
+         0 0 0 1 0" result="greenOnly" />
+      
+      <!-- Desplazar azul -->
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue" />
+      <feColorMatrix in="blue" type="matrix" values="
+         0 0 0 0 0
+         0 0 0 0 0
+         0 0 1 0 0
+         0 0 0 1 0" result="blueOnly" />
+      
+      <!-- Combinar los colores -->
+      <feBlend in="redOnly" in2="greenOnly" mode="screen" result="rg" />
+      <feBlend in="rg" in2="blueOnly" mode="screen" />
+    </filter>
+  </defs>
+</svg>
+
+
+
 <!-- =====================================================
      AUTH
 ====================================================== -->
